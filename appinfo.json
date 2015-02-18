@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "delda@virgilio.it",
+    "longName": "BinaryWatchFace",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "shortName": "BinaryWatchFace",
+    "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
