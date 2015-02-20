@@ -4,10 +4,10 @@
 static Window *s_window;             // main window view
 static TextLayer *s_layerHours;      // text layer for hours
 static TextLayer *s_layerMinutes;    // test layer for minutes
-static Layer *s_bulletsHours;        // bullets for hours
-static Layer *s_bulletsMinutes;      // bullets for minutes
+static Layer *s_dotsHours;        // bullets for hours
+static Layer *s_dotsMinutes;      // bullets for minutes
 
-static void update_proc_bulletsHours(Layer *layer, GContext *gContext){
+static void update_proc_dotsHours(Layer *layer, GContext *gContext){
   graphics_context_set_fill_color(gContext, GColorBlack);
   graphics_fill_circle(gContext, GPoint(20,8), 8);
   graphics_context_set_fill_color(gContext, GColorBlack);
@@ -18,7 +18,7 @@ static void update_proc_bulletsHours(Layer *layer, GContext *gContext){
   graphics_fill_circle(gContext, GPoint(120,8), 8);
 }
 
-static void update_proc_bulletsMinutes(Layer *layer, GContext *gContext){
+static void update_proc_dotsMinutes(Layer *layer, GContext *gContext){
   graphics_context_set_fill_color(gContext, GColorBlack);
   graphics_fill_circle(gContext, GPoint(20,8), 8);
   graphics_context_set_fill_color(gContext, GColorBlack);
@@ -45,13 +45,13 @@ static void window_load(Window *window){
   text_layer_set_text_color(s_layerMinutes, GColorBlack);
   text_layer_set_text(s_layerMinutes, "32 16 8 4 2 1");
   
-  s_bulletsHours = layer_create(GRect(0, 41, 144, 40));
-  layer_add_child(window_get_root_layer(window), s_bulletsHours);
-  layer_set_update_proc(s_bulletsHours, update_proc_bulletsHours);
+  s_dotsHours = layer_create(GRect(0, 41, 144, 40));
+  layer_add_child(window_get_root_layer(window), s_dotsHours);
+  layer_set_update_proc(s_dotsHours, update_proc_dotsHours);
 
-  s_bulletsMinutes = layer_create(GRect(0, 81, 144, 40));
-  layer_add_child(window_get_root_layer(window), s_bulletsMinutes);
-  layer_set_update_proc(s_bulletsMinutes, update_proc_bulletsMinutes);
+  s_dotsMinutes = layer_create(GRect(0, 81, 144, 40));
+  layer_add_child(window_get_root_layer(window), s_dotsMinutes);
+  layer_set_update_proc(s_dotsMinutes, update_proc_dotsMinutes);
 
   // Improve the style
   text_layer_set_font(s_layerHours, fonts_get_system_font(FONT_KEY_GOTHIC_18));
