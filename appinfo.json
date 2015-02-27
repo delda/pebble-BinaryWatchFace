@@ -9,6 +9,7 @@
     "resources": {
         "media": []
     },
+    "sdkVersion": "2",
     "shortName": "BinaryWatchFace",
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
     "versionCode": 1,
