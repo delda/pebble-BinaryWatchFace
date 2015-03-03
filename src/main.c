@@ -9,20 +9,18 @@ static Layer *s_dotsMinutes;         // bullets for minutes
 char *s_textBase[]={"1","2","4","8","16","32"};
 static TextLayer *temp[6];
 
-static void fillRow(Layer *layer, GContext *gContext, GPoint startPosition, int width, int height, int bulletsNumber){
+static void fillRow(Layer *layer, GContext *gContext, GRect layerDim, int bulletsNumber){
   int currentWidth;
-  int widthSingleLayer = (int) width/(bulletsNumber-1);
-  printf("%d / %d = %d", width , bulletsNumber, widthSingleLayer);
+  int widthSingleLayer = (int) layerDim.size.w/(bulletsNumber-1);
   for(int i=0; i<bulletsNumber; i++){
     if(i==0){
-      currentWidth = startPosition.x;
+      currentWidth = layerDim.origin.x;
     }else if(i==(bulletsNumber-1)){
-      currentWidth = startPosition.x + width;
+      currentWidth = layerDim.origin.x + layerDim.size.w;
     }else{
-      currentWidth = startPosition.x + widthSingleLayer * i;
+      currentWidth = layerDim.origin.x + widthSingleLayer * i;
     }
     graphics_context_set_fill_color(gContext,GColorBlack);
-    printf("width: %d", currentWidth);
     graphics_fill_circle(gContext, GPoint(currentWidth,24), 8);
     temp[i] = text_layer_create(GRect((currentWidth-8), 0, 16, 18));
     text_layer_set_background_color(temp[i], GColorClear);
@@ -35,11 +33,11 @@ static void fillRow(Layer *layer, GContext *gContext, GPoint startPosition, int 
 }
 
 static void update_hours(Layer *layer, GContext *gContext){
-  fillRow(layer, gContext, GPoint(20, 20), 110, 24, 5);
+  fillRow(layer, gContext, GRect(20, 20, 104, 24), 5);
 }
 
 static void update_minutes(Layer *layer, GContext *gContext){
-  fillRow(layer, gContext, GPoint(20, 20), 110, 24, 6);
+  fillRow(layer, gContext, GRect(20, 20, 104, 24), 6);
 }
 
 static void window_load(Window *window){
@@ -76,8 +74,8 @@ static void init(){
 }
 
 static void deinit(){ 
-    // Destroy Window
-    window_destroy(s_window);
+  // Destroy Window
+  window_destroy(s_window);
 }
 
 int main(void){
