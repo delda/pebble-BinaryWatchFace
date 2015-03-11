@@ -9,8 +9,12 @@
     "resources": {
         "media": []
     },
-    "sdkVersion": "2",
+    "sdkVersion": "3",
     "shortName": "BinaryWatchFace",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
     "versionCode": 1,
     "versionLabel": "1.0",
