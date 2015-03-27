@@ -1,6 +1,13 @@
 
 #include <pebble.h>
 
+struct color{
+  GColor background;
+  GColor text;
+  GColor bullet;
+  struct color *next;
+};
+
 static Window *s_window;             // main window view
 static Layer *s_mainLayer;           // bullets for hours
 static char *s_textBase[]={"1","2","4","8","16","32"};
@@ -10,11 +17,14 @@ static char bufferTime[20];
 static int s_counter;
 static int s_bulletsNumber[2];
 static GColor s_backgroundColor;
+static GColor s_bulletColor;
 static GColor s_textColor;
 static GRect s_layerRect[2];
 static TimeUnits s_updateTime;
 static int s_isSettingModality;
 static int s_shapeType;
+static struct color *s_colorPalettes;
+static struct color *s_currentPalette;
 
 char *logTime();
 void long_click_up_handler(ClickRecognizerRef recognizer, void *context);

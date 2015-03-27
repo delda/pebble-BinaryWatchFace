@@ -6,6 +6,39 @@ char *logTime(){
   return bufferTime;
 }
 
+void change_color_palette(){
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  s_currentPalette = s_currentPalette->next;
+}
+
+void newPalette(GColor background, GColor text, GColor bullet){
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+
+  if(s_colorPalettes == 0){
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] INIT s_colorPalettes", logTime());
+    s_colorPalettes = (struct color *)malloc(sizeof(struct color));
+    s_colorPalettes->text = text;
+    s_colorPalettes->background = background;
+    s_colorPalettes->bullet = bullet;
+    s_colorPalettes->next = s_colorPalettes;
+  }else{
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] ADD in s_colorPalettes", logTime());
+    struct color *start = s_colorPalettes;
+    /* Iterate through the list till we encounter the last node.*/
+    while(s_colorPalettes->next != start){
+      s_colorPalettes = s_colorPalettes->next;
+    }
+    /* Allocate memory for the new node and put data in it.*/
+    s_colorPalettes->next = (struct color *)malloc(sizeof(struct color));
+    s_colorPalettes = s_colorPalettes->next;
+    s_colorPalettes->background = background;
+    s_colorPalettes->text = text;
+    s_colorPalettes->bullet = bullet;
+    s_colorPalettes->next = start;
+  }
+}
+
 void long_click_up_handler(ClickRecognizerRef recognizer, void *context){}
 
 static void update_time(){
@@ -14,7 +47,11 @@ static void update_time(){
   time_t currentTime = time(NULL);
   struct tm* cTime = localtime(&currentTime);
   unsigned int hour, minute;
-  hour = (cTime->tm_hour == 12) ? 12 : (cTime->tm_hour % 12);
+  if(clock_is_24h_style()){
+    hour = cTime->tm_hour;
+  }else{
+    hour = (cTime->tm_hour == 12) ? 12 : (cTime->tm_hour % 12);
+  }
   minute = cTime->tm_min;
   
   printf("[%s] Time: %d:%d", logTime(), hour, minute);
@@ -28,8 +65,11 @@ static void update_time(){
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Layer marked dirty!");
+  layer_mark_dirty(s_mainLayer);
   update_time();
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Layer marked dirty!");
   layer_mark_dirty(s_mainLayer);
 }
 
@@ -63,7 +103,7 @@ void start_settings_modality(ClickRecognizerRef recognizer, void *context){
 void click_config_provider(void *context){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   window_single_click_subscribe(BUTTON_ID_UP, change_shape);
-//  window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 100, down_single_repeating_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, change_color_palette);
   window_single_click_subscribe(BUTTON_ID_SELECT, stop_settings_modality);
   window_long_click_subscribe(BUTTON_ID_SELECT, 1000, start_settings_modality, long_click_up_handler);
 } 
@@ -84,7 +124,7 @@ void dec2bin(int number, int hORm){
   }
 }
 
-static void fill_row(Layer *layer, GContext *gContext){
+static void fill_screen(Layer *layer, GContext *gContext){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   int currentWidth, currentHeight;
@@ -92,7 +132,13 @@ static void fill_row(Layer *layer, GContext *gContext){
   
   APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] %s (0): %d %d %d %d %d %d", logTime(), __func__, s_bufferTime[0][5], s_bufferTime[0][4], s_bufferTime[0][3], s_bufferTime[0][2], s_bufferTime[0][1], s_bufferTime[0][0]);
   APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] %s (1): %d %d %d %d %d %d", logTime(), __func__, s_bufferTime[1][5], s_bufferTime[1][4], s_bufferTime[1][3], s_bufferTime[1][2], s_bufferTime[1][1], s_bufferTime[1][0]);
-  
+
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Bullets color!");
+  graphics_context_set_stroke_color(gContext, s_currentPalette->bullet);
+  graphics_context_set_fill_color(gContext, s_currentPalette->bullet);
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Window background!");
+  window_set_background_color(s_window, s_currentPalette->background);
+
   for(int i=0; i<2; i++){
     // trick to simulate the round function
     widthSingleLayer = (int)(s_layerRect[i].size.w/(s_bulletsNumber[i]-1));
@@ -100,8 +146,9 @@ static void fill_row(Layer *layer, GContext *gContext){
     if(wRest > (s_bulletsNumber[i]-1)/2){
       widthSingleLayer++;
     }
-  
+
     for(int j=0; j<s_bulletsNumber[i]; j++){
+      // Choose right size
       if(j == (s_bulletsNumber[i] - 1)){
         currentWidth = s_layerRect[i].origin.x;
       }else if(j == 0){
@@ -110,6 +157,11 @@ static void fill_row(Layer *layer, GContext *gContext){
         currentWidth = s_layerRect[i].origin.x + widthSingleLayer * (s_bulletsNumber[i] - j - 1);
       }
       currentHeight = s_layerRect[i].origin.y;
+
+      // Colors
+      APP_LOG(APP_LOG_LEVEL_ERROR, "layer[%d][%d]!", i, j);
+      text_layer_set_text_color(text[i][j], s_currentPalette->text);
+      
       if(s_bufferTime[i][j] == 1){
         if(s_shapeType == 0){
           graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight+24), 8);
@@ -124,56 +176,53 @@ static void fill_row(Layer *layer, GContext *gContext){
           graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight+19}, .size={14,14}});
         }
       }
-      graphics_context_set_fill_color(gContext, s_textColor);
-      if(text[i][j] == NULL)
+      if(text[i][j] == NULL){
         text[i][j] = text_layer_create((GRect){.origin={currentWidth-8, currentHeight}, .size={16, 18}});
-      text_layer_set_background_color(text[i][j], s_backgroundColor);
-      text_layer_set_font(text[i][j], fonts_get_system_font(FONT_KEY_GOTHIC_14));
-      text_layer_set_text_color(text[i][j], s_textColor);
-      text_layer_set_text_alignment(text[i][j], GTextAlignmentCenter);
-      text_layer_set_text(text[i][j], s_textBase[j]);
-      layer_add_child(layer, text_layer_get_layer(text[i][j]));
+        text_layer_set_font(text[i][j], fonts_get_system_font(FONT_KEY_GOTHIC_14));
+        text_layer_set_text_alignment(text[i][j], GTextAlignmentCenter);
+        text_layer_set_text(text[i][j], s_textBase[j]);
+        text_layer_set_background_color(text[i][j], GColorClear);
+        layer_add_child(layer, text_layer_get_layer(text[i][j]));
+      }
     }
   }
 }
 
 static void update_time_view(Layer *layer, GContext *gContext){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
+  APP_LOG(APP_LOG_LEVEL_ERROR, "*** Window background!");
+  window_set_background_color(s_window, s_currentPalette->background);
+  window_set_background_color(s_window, s_currentPalette->background);
+
   s_counter++;
   if(s_isSettingModality && s_counter%2){
-    s_backgroundColor = GColorClear;
-    s_textColor = GColorWhite;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Colore test: GColorWhite");
+    APP_LOG(APP_LOG_LEVEL_ERROR, "*** Bullets color!");
+    graphics_context_set_stroke_color(gContext, s_currentPalette->background);
+    graphics_context_set_fill_color(gContext, s_currentPalette->background);
     for(int i=0; i<2; i++){
       for(int j=0; j<6; j++){
-        text_layer_set_text_color(text[i][j], s_textColor);
+        APP_LOG(APP_LOG_LEVEL_ERROR, "*** layer[%d][%d]!", i, j);
+        text_layer_set_text_color(text[i][j], s_currentPalette->background);
       }
     }
-    return;
   }else{
-    s_backgroundColor = GColorClear;
-    s_textColor = GColorBlack;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Colore test: GColorBlack");
+    fill_screen(layer, gContext);
   }
-  
-  fill_row(layer, gContext);
 }
 
 static void window_load(Window *window){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   Layer *window_layer = window_get_root_layer(window);
+  APP_LOG(APP_LOG_LEVEL_ERROR, "window load background color!");
+  window_set_background_color(window, s_currentPalette->background);
   GRect windowBounds = layer_get_bounds(window_layer);
 
   s_counter = 1;
   s_shapeType = 0;
   
-  if(clock_is_24h_style()){
-    s_bulletsNumber[0] = 5;
-  }else{
-    s_bulletsNumber[0] = 4;
-  }
+  s_bulletsNumber[0] = clock_is_24h_style() ? 5 : 4;
   s_bulletsNumber[1] = 6;
   
   s_layerRect[0] = (GRect){.origin={20, 20}, .size={104, 24}};
@@ -194,8 +243,11 @@ static void init(){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   // Set standard values
-  s_backgroundColor = GColorClear;
-  s_textColor = GColorBlack;  
+  s_colorPalettes = 0;
+  newPalette(GColorBlack, GColorWhite, GColorWhite);
+  newPalette(GColorWhite, GColorBlack, GColorBlack);
+  s_currentPalette = s_colorPalettes;
+  
   s_updateTime = MINUTE_UNIT;
   s_isSettingModality = false;
   
