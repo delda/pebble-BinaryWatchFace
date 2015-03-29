@@ -10,6 +10,7 @@ void change_color_palette(){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   s_currentPalette = s_currentPalette->next;
+  layer_mark_dirty(s_mainLayer);
 }
 
 void newPalette(GColor background, GColor text, GColor bullet){
@@ -54,7 +55,7 @@ static void update_time(){
   }
   minute = cTime->tm_min;
   
-  printf("[%s] Time: %d:%d", logTime(), hour, minute);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] Time: %d:%d", logTime(), hour, minute);
   
   dec2bin(hour, 0);
   APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] Bin h: %d %d %d %d %d %d", logTime(), s_bufferTime[0][5], s_bufferTime[0][4], s_bufferTime[0][3], s_bufferTime[0][2], s_bufferTime[0][1], s_bufferTime[0][0]);
@@ -66,8 +67,6 @@ static void update_time(){
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Layer marked dirty!");
-  layer_mark_dirty(s_mainLayer);
   update_time();
   APP_LOG(APP_LOG_LEVEL_ERROR, "Layer marked dirty!");
   layer_mark_dirty(s_mainLayer);
@@ -130,14 +129,11 @@ static void fill_screen(Layer *layer, GContext *gContext){
   int currentWidth, currentHeight;
   int widthSingleLayer;
   
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] %s (0): %d %d %d %d %d %d", logTime(), __func__, s_bufferTime[0][5], s_bufferTime[0][4], s_bufferTime[0][3], s_bufferTime[0][2], s_bufferTime[0][1], s_bufferTime[0][0]);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] %s (1): %d %d %d %d %d %d", logTime(), __func__, s_bufferTime[1][5], s_bufferTime[1][4], s_bufferTime[1][3], s_bufferTime[1][2], s_bufferTime[1][1], s_bufferTime[1][0]);
-
   APP_LOG(APP_LOG_LEVEL_ERROR, "Bullets color!");
   graphics_context_set_stroke_color(gContext, s_currentPalette->bullet);
   graphics_context_set_fill_color(gContext, s_currentPalette->bullet);
   APP_LOG(APP_LOG_LEVEL_ERROR, "Window background!");
-  window_set_background_color(s_window, s_currentPalette->background);
+//  text_layer_set_background_color(s_textMainLayer, s_currentPalette->background);
 
   for(int i=0; i<2; i++){
     // trick to simulate the round function
@@ -161,7 +157,7 @@ static void fill_screen(Layer *layer, GContext *gContext){
       // Colors
       APP_LOG(APP_LOG_LEVEL_ERROR, "layer[%d][%d]!", i, j);
       text_layer_set_text_color(text[i][j], s_currentPalette->text);
-      
+
       if(s_bufferTime[i][j] == 1){
         if(s_shapeType == 0){
           graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight+24), 8);
@@ -192,8 +188,7 @@ static void update_time_view(Layer *layer, GContext *gContext){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   APP_LOG(APP_LOG_LEVEL_ERROR, "*** Window background!");
-  window_set_background_color(s_window, s_currentPalette->background);
-  window_set_background_color(s_window, s_currentPalette->background);
+  text_layer_set_background_color(s_textMainLayer, s_currentPalette->background);
 
   s_counter++;
   if(s_isSettingModality && s_counter%2){
@@ -215,8 +210,7 @@ static void window_load(Window *window){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   Layer *window_layer = window_get_root_layer(window);
-  APP_LOG(APP_LOG_LEVEL_ERROR, "window load background color!");
-  window_set_background_color(window, s_currentPalette->background);
+  window_set_background_color(window, GColorClear);
   GRect windowBounds = layer_get_bounds(window_layer);
 
   s_counter = 1;
@@ -229,6 +223,10 @@ static void window_load(Window *window){
   s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}};
     
   s_mainLayer = layer_create((GRect){.origin={0, 0}, .size={windowBounds.size.w, windowBounds.size.h}});
+  s_textMainLayer = text_layer_create((GRect){.origin={0, 0}, .size={windowBounds.size.w, windowBounds.size.h}});
+  APP_LOG(APP_LOG_LEVEL_ERROR, "window load background color!");
+  text_layer_set_background_color(s_textMainLayer, s_currentPalette->background);
+  layer_add_child(window_layer, text_layer_get_layer(s_textMainLayer));
   layer_add_child(window_layer, s_mainLayer);
   layer_set_update_proc(s_mainLayer, update_time_view);
 }

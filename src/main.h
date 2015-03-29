@@ -25,6 +25,7 @@ static int s_isSettingModality;
 static int s_shapeType;
 static struct color *s_colorPalettes;
 static struct color *s_currentPalette;
+static TextLayer *s_textMainLayer;
 
 char *logTime();
 void long_click_up_handler(ClickRecognizerRef recognizer, void *context);
