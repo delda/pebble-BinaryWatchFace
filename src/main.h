@@ -26,6 +26,7 @@ static int s_shapeType;
 static struct color *s_colorPalettes;
 static struct color *s_currentPalette;
 static TextLayer *s_textMainLayer;
+static GPath *tmp_GPath;
 
 char *logTime();
 void long_click_up_handler(ClickRecognizerRef recognizer, void *context);

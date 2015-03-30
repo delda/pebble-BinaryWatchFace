@@ -76,9 +76,10 @@ void change_shape(ClickRecognizerRef recognizer, void *context){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   if(s_isSettingModality == 1){
-    s_shapeType = (s_shapeType+1) % 2;
+    s_shapeType = (s_shapeType+1) % 4;
   }
   APP_LOG(APP_LOG_LEVEL_ERROR, "s_shapeType: %d", s_shapeType);
+  layer_mark_dirty(s_mainLayer);
 }
 
 void stop_settings_modality(ClickRecognizerRef recognizer, void *context){
@@ -133,7 +134,7 @@ static void fill_screen(Layer *layer, GContext *gContext){
   graphics_context_set_stroke_color(gContext, s_currentPalette->bullet);
   graphics_context_set_fill_color(gContext, s_currentPalette->bullet);
   APP_LOG(APP_LOG_LEVEL_ERROR, "Window background!");
-//  text_layer_set_background_color(s_textMainLayer, s_currentPalette->background);
+  text_layer_set_background_color(s_textMainLayer, s_currentPalette->background);
 
   for(int i=0; i<2; i++){
     // trick to simulate the round function
@@ -159,17 +160,37 @@ static void fill_screen(Layer *layer, GContext *gContext){
       text_layer_set_text_color(text[i][j], s_currentPalette->text);
 
       if(s_bufferTime[i][j] == 1){
-        if(s_shapeType == 0){
-          graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight+24), 8);
-        }else{
-          graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight+18}, .size={16,16}}, 0, GCornerNone);
+        switch(s_shapeType){
+          case 0:
+            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight+24), 8);
+            break;
+          case 1:
+            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight+18}, .size={16,16}}, 0, GCornerNone);
+            break;
+          case 2:
+            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight+18}, .size={12,19}}, 0, GCornerNone);
+            break;
+          case 3:
+            gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight+18}, {currentWidth+10, currentHeight+28}, {currentWidth, currentHeight+38}, {currentWidth-10, currentHeight+28}}}));
+            break;
         }
       }else{
-        if(s_shapeType == 0){
-          graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight+24), 8);
-        }else{
-          graphics_draw_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight+18}, .size={16,16}});
-          graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight+19}, .size={14,14}});
+        switch(s_shapeType){
+          case 0:
+            graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight+24), 8);
+            break;
+          case 1:
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight+18}, .size={16,16}});
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight+19}, .size={14,14}});          
+            break;
+          case 2:
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight+18}, .size={12,19}});
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight+19}, .size={10,17}});          
+            break;            
+          case 3:
+            gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight+19}, {currentWidth+9, currentHeight+28}, {currentWidth, currentHeight+37}, {currentWidth-9, currentHeight+28}}}));
+            gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight+20}, {currentWidth+8, currentHeight+28}, {currentWidth, currentHeight+36}, {currentWidth-8, currentHeight+28}}}));
+            break;
         }
       }
       if(text[i][j] == NULL){
