@@ -76,7 +76,7 @@ void change_shape(ClickRecognizerRef recognizer, void *context){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   if(s_isSettingModality == 1){
-    s_shapeType = (s_shapeType+1) % 4;
+    s_shapeType = (s_shapeType+1) % 6;
   }
   APP_LOG(APP_LOG_LEVEL_ERROR, "s_shapeType: %d", s_shapeType);
   layer_mark_dirty(s_mainLayer);
@@ -173,6 +173,12 @@ static void fill_screen(Layer *layer, GContext *gContext){
           case 3:
             gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight+18}, {currentWidth+10, currentHeight+28}, {currentWidth, currentHeight+38}, {currentWidth-10, currentHeight+28}}}));
             break;
+          case 4:
+            gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight+18}, {currentWidth+10, currentHeight+39}, {currentWidth-10, currentHeight+39}}}));
+            break;
+          case 5:
+            gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=10, .points=(GPoint []){{currentWidth-7+7,  currentHeight+18}, {currentWidth-7+11, currentHeight+18+4}, {currentWidth-7+17, currentHeight+18+4}, {currentWidth-7+13, currentHeight+18+10}, {currentWidth-7+16, currentHeight+18+19}, {currentWidth-7+7,  currentHeight+18+15}, {currentWidth-7-1,  currentHeight+18+18}, {currentWidth-7+1,  currentHeight+18+11}, {currentWidth-7-3,  currentHeight+18+5}, {currentWidth-7+3 , currentHeight+18+5}}}));
+            break;
         }
       }else{
         switch(s_shapeType){
@@ -191,6 +197,13 @@ static void fill_screen(Layer *layer, GContext *gContext){
             gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight+19}, {currentWidth+9, currentHeight+28}, {currentWidth, currentHeight+37}, {currentWidth-9, currentHeight+28}}}));
             gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight+20}, {currentWidth+8, currentHeight+28}, {currentWidth, currentHeight+36}, {currentWidth-8, currentHeight+28}}}));
             break;
+          case 4:
+            gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight+20}, {currentWidth+9, currentHeight+39}, {currentWidth-9, currentHeight+39}}}));
+            gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight+22}, {currentWidth+8, currentHeight+38}, {currentWidth-8, currentHeight+38}}}));
+            break;
+          case 5:
+            gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=10, .points=(GPoint []){{currentWidth-7+7,  currentHeight+18+1}, {currentWidth-7+11, currentHeight+18+5}, {currentWidth-7+16, currentHeight+18+5}, {currentWidth-7+12, currentHeight+18+10}, {currentWidth-7+14, currentHeight+18+17}, {currentWidth-7+7,  currentHeight+18+13}, {currentWidth-7+0,  currentHeight+18+17}, {currentWidth-7+2,  currentHeight+18+10}, {currentWidth-7-2,  currentHeight+18+5}, {currentWidth-7+3 , currentHeight+18+5}}}));
+            break;        
         }
       }
       if(text[i][j] == NULL){

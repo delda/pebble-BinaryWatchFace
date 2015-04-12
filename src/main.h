@@ -1,4 +1,3 @@
-
 #include <pebble.h>
 
 struct color{
@@ -7,6 +6,9 @@ struct color{
   GColor bullet;
   struct color *next;
 };
+
+#define ENABLE_LOG
+static uint8_t s_logLevel = APP_LOG_LEVEL_ERROR;
 
 static Window *s_window;             // main window view
 static Layer *s_mainLayer;           // bullets for hours
@@ -41,4 +43,3 @@ static void window_load(Window *window);
 static void window_unload();
 static void init();
 static void deinit();
-int main(void);
