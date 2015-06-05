@@ -1,24 +1,30 @@
 {
     "appKeys": {},
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "delda@virgilio.it",
-    "longName": "BinaryWatchapp",
+    "longName": "BinaryWatchFace",
     "projectType": "native",
     "resources": {
-        "media": []
+        "media": [
+            {
+                "file": "images/binary.png",
+                "menuIcon": true,
+                "name": "MENU_ICON",
+                "type": "png"
+            }
+        ]
     },
     "sdkVersion": "3",
-    "shortName": "BinaryWatchapp",
+    "shortName": "Binary Watch",
     "targetPlatforms": [
         "aplite",
         "basalt"
     ],
-    "uuid": "3f09444f-73bb-4753-9cc3-89b6def0eab3",
-    "versionCode": 1,
-    "versionLabel": "1.4",
+    "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
+    "versionLabel": "2.0",
     "watchapp": {
-        "watchface": false
+        "watchface": true
     }
 }
