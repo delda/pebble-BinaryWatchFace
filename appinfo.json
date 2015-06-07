@@ -1,7 +1,7 @@
 {
     "appKeys": {},
     "capabilities": [
-        "configurable"
+        ""
     ],
     "companyName": "delda@virgilio.it",
     "longName": "BinaryWatchFace",
@@ -23,7 +23,7 @@
         "basalt"
     ],
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
-    "versionLabel": "2.0",
+    "versionLabel": "2.1",
     "watchapp": {
         "watchface": true
     }

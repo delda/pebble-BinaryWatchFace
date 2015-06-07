@@ -1,12 +1,5 @@
 #include "main.h"
 
-static Window *s_window;             // main window view
-static Layer *s_mainLayer;           // bullets for hours
-//static char *s_textBase[]={"1","2","4","8","16","32"};
-static int s_bufferTime[2][6];
-static TextLayer *text[2][6];
-static char bufferTime[20];
-
 char *logTime(){
   time_t now = time(NULL);
   strftime(bufferTime, 20, "%Y-%m-%d %H:%M:%S.000", localtime(&now));
@@ -30,21 +23,22 @@ void dec2bin(int number, int hORm){
 }
 
 static void update_time(){
-APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   time_t currentTime = time(NULL);
   struct tm* cTime = localtime(&currentTime);
   unsigned int hour, minute;
-  hour = (cTime->tm_hour == 12) ? 12 : (cTime->tm_hour % 12);
+  if(clock_is_24h_style()){
+    hour = cTime->tm_hour;
+  }else{
+    hour = (cTime->tm_hour == 12) ? 12 : (cTime->tm_hour % 12);
+  }
   minute = cTime->tm_min;
   
   printf("[%s] Time: %d:%d", logTime(), hour, minute);
   
   dec2bin(hour, 0);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] Dec h: %d %d %d %d %d %d", logTime(), s_bufferTime[0][5], s_bufferTime[0][4], s_bufferTime[0][3], s_bufferTime[0][2], s_bufferTime[0][1], s_bufferTime[0][0]);
-  
   dec2bin(minute, 1);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] Dec m: %d %d %d %d %d %d", logTime(), s_bufferTime[1][5], s_bufferTime[1][4], s_bufferTime[1][3], s_bufferTime[1][2], s_bufferTime[1][1], s_bufferTime[1][0]);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
@@ -54,54 +48,47 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
   layer_mark_dirty(s_mainLayer);
 }
 
-static void fillRow(Layer *layer, GContext *gContext, GRect layerRect, int bulletsNumber, int *s_bufferTime, int textLayerIndex){
+static void update_view(Layer *layer, GContext *gContext){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   int currentWidth, currentHeight;
   int widthSingleLayer;
   
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] fillRow (%d): %d %d %d %d %d %d", logTime(), textLayerIndex, s_bufferTime[5], s_bufferTime[4], s_bufferTime[3], s_bufferTime[2], s_bufferTime[1], s_bufferTime[0]);
-  
-  // trick to simulate the round function
-  widthSingleLayer = (int)(layerRect.size.w/(bulletsNumber-1));
-  int wRest = layerRect.size.w%(bulletsNumber-1);
-  if(wRest > (bulletsNumber-1)/2){
-    widthSingleLayer++;
-  }
+  for(int j=0; j<2; j++){
+    // trick to simulate the round function
+    widthSingleLayer = (int)(s_layerRect[j].size.w/(s_bulletsNumber[j]-1));
+    int wRest = s_layerRect[j].size.w%(s_bulletsNumber[j]-1);
+    if(wRest > (s_bulletsNumber[j]-1)/2){
+      widthSingleLayer++;
+    }
 
-  for(int i=0; i<bulletsNumber; i++){
-    if(i == (bulletsNumber - 1)){
-      currentWidth = layerRect.origin.x;
-    }else if(i == 0){
-      currentWidth = layerRect.origin.x + layerRect.size.w;
-    }else{
-      currentWidth = layerRect.origin.x + widthSingleLayer * (bulletsNumber - i - 1);
-    }
-    currentHeight = layerRect.origin.y + 24;
-    if(s_bufferTime[i] == 1){
-      graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
-    }else{
-      graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight), 8);
-    }
-    graphics_context_set_fill_color(gContext, GColorBlack);
-    if(!text[textLayerIndex][i]){
-      text[textLayerIndex][i] = text_layer_create((GRect){.origin={currentWidth-8, layerRect.origin.y}, .size={16, 18}});
-      text_layer_set_background_color(text[textLayerIndex][i], GColorClear);
-      text_layer_set_font(text[textLayerIndex][i], fonts_get_system_font(FONT_KEY_GOTHIC_14));
-      text_layer_set_text_color(text[textLayerIndex][i], GColorBlack);
-      text_layer_set_text_alignment(text[textLayerIndex][i], GTextAlignmentCenter);
-      text_layer_set_text(text[textLayerIndex][i], s_textBase[i]);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] Label value: s_textBase[%d]=%s", logTime(), i, s_textBase[i]);
-      layer_add_child(layer, text_layer_get_layer(text[textLayerIndex][i]));
+    for(int i=0; i<s_bulletsNumber[j]; i++){
+      if(i == (s_bulletsNumber[j] - 1)){
+        currentWidth = s_layerRect[j].origin.x;
+      }else if(i == 0){
+        currentWidth = s_layerRect[j].origin.x + s_layerRect[j].size.w;
+      }else{
+        currentWidth = s_layerRect[j].origin.x + widthSingleLayer * (s_bulletsNumber[j] - i - 1);
+      }
+      currentHeight = s_layerRect[j].origin.y + 24;
+      if(s_bufferTime[j][i] == 1){
+        graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+      }else{
+        graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+      }
+      graphics_context_set_fill_color(gContext, GColorBlack);
+      if(!text[j][i]){
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] First time: creating lavels", logTime());
+        text[j][i] = text_layer_create((GRect){.origin={currentWidth-8, s_layerRect[j].origin.y}, .size={16, 18}});
+        text_layer_set_background_color(text[j][i], GColorClear);
+        text_layer_set_font(text[j][i], fonts_get_system_font(FONT_KEY_GOTHIC_14));
+        text_layer_set_text_color(text[j][i], GColorBlack);
+        text_layer_set_text_alignment(text[j][i], GTextAlignmentCenter);
+        text_layer_set_text(text[j][i], s_textBase[i]);
+        layer_add_child(layer, text_layer_get_layer(text[j][i]));
+      }
     }
   }
-}
-
-static void update_time_view(Layer *layer, GContext *gContext){
-  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
-  fillRow(layer, gContext, (GRect){.origin={20, 20}, .size={104, 24}}, 5, s_bufferTime[0], 0);
-  fillRow(layer, gContext, (GRect){.origin={20, 60}, .size={104, 24}}, 6, s_bufferTime[1], 1);
 }
 
 static void window_load(Window *window){
@@ -112,7 +99,14 @@ static void window_load(Window *window){
 
   s_mainLayer = layer_create((GRect){.origin={0, 0}, .size={windowBounds.size.w, windowBounds.size.h}});
   layer_add_child(window_layer, s_mainLayer);
-  layer_set_update_proc(s_mainLayer, update_time_view);
+  
+  s_bulletsNumber[0] = clock_is_24h_style() ? 5 : 4;
+  s_bulletsNumber[1] = 6;
+
+  s_layerRect[0] = (GRect){.origin={20, 20}, .size={104, 24}};
+  s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}};
+  
+  layer_set_update_proc(s_mainLayer, update_view);
 }
 
 static void window_unload(){
@@ -126,6 +120,7 @@ static void init(){
   
   // Create main window view
   s_window = window_create();
+  window_set_background_color(s_window, GColorWhite);
   
   // Set window handlers
   window_set_window_handlers(s_window, (WindowHandlers) {
