@@ -22,6 +22,35 @@ void dec2bin(int number, int hORm){
   }
 }
 
+static void sync_error_callback(DictionaryResult dict_error, AppMessageResult app_message_error, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  APP_LOG(APP_LOG_LEVEL_ERROR, "App Message Sync Error: %d", app_message_error);
+}
+
+static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tuple, const Tuple* old_tuple, void* context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  switch (key) {
+    case SHAPE_KEY:
+      shape = new_tuple->value->uint8;
+      persist_write_int(SHAPE_KEY, shape);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Shape: %u", shape);
+      break;
+
+    case COLOR_KEY:
+      break;
+
+    case BATTERY_KEY:
+      break;
+
+    case BLUETOOTH_KEY:
+      break;
+
+    case FLIP_PHONE_KEY:
+      break;
+  }
+}
+
 static void update_time(){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
@@ -107,6 +136,17 @@ static void window_load(Window *window){
   s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}};
   
   layer_set_update_proc(s_mainLayer, update_view);
+  
+  Tuplet initial_values[] = {
+    TupletInteger(SHAPE_KEY,      (uint8_t) 0),
+    TupletInteger(COLOR_KEY,      (uint8_t) 0),
+    TupletInteger(BATTERY_KEY,    (uint8_t) 1),
+    TupletInteger(BLUETOOTH_KEY,  (uint8_t) 1),
+    TupletInteger(FLIP_PHONE_KEY, (uint8_t) 1),
+  };
+  
+  app_sync_init(&sync, sync_buffer, sizeof(sync_buffer), initial_values, ARRAY_LENGTH(initial_values),
+                sync_tuple_changed_callback, sync_error_callback, NULL);
 }
 
 static void window_unload(){
@@ -117,6 +157,11 @@ static void window_unload(){
 
 static void init(){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  if(persist_exists(SHAPE_KEY)){
+		shape = persist_read_int(SHAPE_KEY);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Read text alignment from store: %u", shape);
+	}
   
   // Create main window view
   s_window = window_create();
@@ -130,6 +175,9 @@ static void init(){
   
   // Show the window on the watch
   window_stack_push(s_window, true);
+  
+  // Open AppMessage to transfers
+  app_message_open(64, 64);
   
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
 }
