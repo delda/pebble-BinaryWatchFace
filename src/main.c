@@ -83,6 +83,7 @@ static void update_view(Layer *layer, GContext *gContext){
   int currentWidth, currentHeight;
   int widthSingleLayer;
   
+  // Foreach row
   for(int j=0; j<2; j++){
     // trick to simulate the round function
     widthSingleLayer = (int)(s_layerRect[j].size.w/(s_bulletsNumber[j]-1));
@@ -91,6 +92,7 @@ static void update_view(Layer *layer, GContext *gContext){
       widthSingleLayer++;
     }
 
+    // Foreach binary value
     for(int i=0; i<s_bulletsNumber[j]; i++){
       if(i == (s_bulletsNumber[j] - 1)){
         currentWidth = s_layerRect[j].origin.x;
@@ -106,16 +108,17 @@ static void update_view(Layer *layer, GContext *gContext){
         graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight), 8);
       }
       graphics_context_set_fill_color(gContext, GColorBlack);
-      if(!text[j][i]){
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "[%s] First time: creating lavels", logTime());
-        text[j][i] = text_layer_create((GRect){.origin={currentWidth-8, s_layerRect[j].origin.y}, .size={16, 18}});
-        text_layer_set_background_color(text[j][i], GColorClear);
-        text_layer_set_font(text[j][i], fonts_get_system_font(FONT_KEY_GOTHIC_14));
-        text_layer_set_text_color(text[j][i], GColorBlack);
-        text_layer_set_text_alignment(text[j][i], GTextAlignmentCenter);
-        text_layer_set_text(text[j][i], s_textBase[i]);
-        layer_add_child(layer, text_layer_get_layer(text[j][i]));
-      }
+      // set text
+      graphics_context_set_text_color(gContext, GColorBlack);
+      graphics_draw_text(gContext, 
+                         s_textBase[i], 
+                         fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                         (GRect){.origin={currentWidth-8, s_layerRect[j].origin.y}, .size={16, 18}}, 
+                         GTextOverflowModeWordWrap,
+                         GTextAlignmentCenter,
+                         NULL
+                        );
+
     }
   }
 }
@@ -165,7 +168,11 @@ static void init(){
   
   // Create main window view
   s_window = window_create();
-  window_set_background_color(s_window, GColorWhite);
+  #ifdef PBL_COLOR
+    window_set_background_color(s_window, GColorWhite);
+  #else
+    window_set_background_color(s_window, GColorWhite);
+  #endif
   
   // Set window handlers
   window_set_window_handlers(s_window, (WindowHandlers) {
