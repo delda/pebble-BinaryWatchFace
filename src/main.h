@@ -13,6 +13,10 @@ static AppSync sync;
 static uint8_t sync_buffer[32];
 
 static int shape = 0;
+static int color = 0;
+
+static GColor backgroundColor;
+static GColor textColor;
 
 enum appParameters {
   SHAPE_KEY      = 0x0,

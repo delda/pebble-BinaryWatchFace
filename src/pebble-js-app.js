@@ -5,15 +5,21 @@
 // http://codepen.io/pen
 
 function readyCallback(event){
-  console.log('JavaScript app ready and running!');
+  console.log('readyCallback()');
 }
-//function appMessage(event){}
+
+function appMessage(event){
+  console.log('appMessage()');
+}
+
 function showConfiguration(event){
+  console.log('showConfiguration()');
   var url = 'http://delda.altervista.org/index.html';
   Pebble.openURL(url);
 }
 
 function webViewClosed(event){
+  console.log('webViewClosed');
   var resp = event.response;
   localStorage.setItem("options", resp);
   
@@ -27,33 +33,61 @@ function webViewClosed(event){
 function prepareConfiguration(serialized_settings){
   console.log('prepareConfiguration');
   var settings = JSON.parse(serialized_settings);
-  var shape = 1;
+  var shape = 0;
+  var color = 0;
 
+  console.log(settings.shape);
   switch(settings.shape){
     case 'cerchio':
-      shape = 0;
-      break;
-    case 'rettangolo':
       shape = 1;
       break;
-    case 'quadrato':
+    case 'rettangolo':
       shape = 2;
+      break;
+    case 'quadrato':
+      shape = 3;
+      break;
+    default:
+      shape = 0;
       break;
   }
   
+  console.log(settings.color);
+  switch(settings.color){
+    case 'wh-bl':
+      color = 1;
+      break;
+    case 'bl-wh':
+      color = 2;
+      break;
+    default:
+      color = 0;
+  }
+  
+  console.log('Shape: ' + shape);
+  console.log('Color: ' + color);
   return {
-    "0": shape,
+    '0': shape,
+    '1': color,
   };
 }
 
 
 // Takes a JSON message as input.  Sends the message to the watch.
 function transmitConfiguration(dictionary){
-  console.log('transmitConfiguration');
-  Pebble.sendAppMessage(dictionary);
+  console.log('trasmetted configuration: ' + JSON.stringify(dictionary));
+  Pebble.sendAppMessage(dictionary, 
+    function(e) {
+      console.log('Send successful: ' + JSON.stringify(e));
+    },
+    function(e) {
+      console.log('Send failed! ' + JSON.stringify(e));
+    }
+  );
 }
 
+
 Pebble.addEventListener("ready", readyCallback);
-//Pebble.addEventListener("appmessage", appMessage);
+Pebble.addEventListener("appmessage", appMessage);
 Pebble.addEventListener("showConfiguration", showConfiguration);
 Pebble.addEventListener("webviewclosed", webViewClosed);
