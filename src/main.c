@@ -252,7 +252,7 @@ static void init(){
   // Open AppMessage to transfers
   app_message_open(64, 64);
   
-/*  APP_LOG(APP_LOG_LEVEL_DEBUG, "Init prev shape: %u", shape);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Init prev shape: %u", shape);
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Init curr shape: %u", shape);
@@ -263,16 +263,6 @@ static void init(){
     shape = 1;
   }
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Init next shape: %u", shape);
-  
-  if(persist_exists(COLOR_KEY)){
-    color = persist_read_int(COLOR_KEY);
-    if(color < 0 && color > 2){
-      color = 1;
-    }
-  }else{
-    color = 1;
-  }
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Init color: %u", color); */
   
   // Create main window view
   s_window = window_create();
