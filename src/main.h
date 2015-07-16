@@ -25,3 +25,11 @@ enum appParameters {
   BLUETOOTH_KEY  = 0x3,
   FLIP_PHONE_KEY = 0x4,
 };
+
+typedef struct{
+  GColor background;
+  GColor text;
+  GColor bullet;
+} Color;
+
+static Color colors[2];

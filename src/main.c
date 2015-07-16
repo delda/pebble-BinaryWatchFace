@@ -61,19 +61,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // Process all pairs present
   while (t != NULL) {
-    // Long lived buffer
-    //static char s_buffer[64];
-
     // Process this pair's key
     switch (t->key) {
       case SHAPE_KEY:
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Init prev shape: %u", shape);
         shape = t->value->uint8;
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Init new shape: %u", shape);
         if(shape < 1 || shape > 3){
-          shape = 2;
+          shape = 1;
         }
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Init post shape: %u", shape);
         persist_write_int(SHAPE_KEY, shape);
         break;
   
@@ -176,6 +170,7 @@ static void update_view(Layer *layer, GContext *gContext){
           case 2:     // square
             graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
             break;
+          case 1:
           default:    // disk
             graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
             break;
@@ -186,6 +181,7 @@ static void update_view(Layer *layer, GContext *gContext){
             graphics_draw_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}});
             graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight-5}, .size={14,14}});
             break;
+          case 1:
           default:    // disc
             graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight), 8);
             break;
