@@ -1,18 +1,17 @@
 
-var shape;
+var PBL_COLOR, shape, color;
 
 function readConfig(){
   console.log('readConfig()');
   shape = localStorage.getItem('shape');
-  console.log("shape1: " + shape);
   shape = shape ? shape : 0;
-  console.log("shape2: " + shape);
+  color = color ? color : 0;
 }
 
 function readyCallback(event){
   console.log('readyCallback()');
   readConfig();
-  var jsonConfig = JSON.parse('{"shape":'+shape+'}');
+  var jsonConfig = JSON.parse('{"shape":'+shape+',"color":'+color+'}');
   Pebble.sendAppMessage(jsonConfig);
 }
 
@@ -23,8 +22,8 @@ function appMessage(event){
 function showConfiguration(event){
   console.log('showConfiguration()');
   readConfig();
-  var attributes = 'shape='+shape;
-  var url = 'http://delda.github.io/pebble_binaryWatch/index.html?'+attributes;
+  var attributes = '?shape='+shape+'&color='+color;
+  var url = 'http://delda.github.io/pebble_binaryWatch/index.html'+attributes;
   console.log("url: " + url);
   Pebble.openURL(url);
 }
@@ -38,9 +37,7 @@ function webViewClosed(event){
   setLocalStorage(resp);
 }
 
-// Takes a string containing serialized JSON as input.  This is the
-// format that is sent back from the configuration web UI.  Produces
-// a JSON message to send to the watch face.
+// Format sent back from the configuration web UI
 function prepareConfiguration(serialized_settings){
   console.log('prepareConfiguration');
   var settings = JSON.parse(serialized_settings);
@@ -48,28 +45,17 @@ function prepareConfiguration(serialized_settings){
   var color = 0;
 
   shape = (settings.shape) ? Number(settings.shape) : 0;
+  color = (settings.color) ? Number(settings.color) : 0;
   
-  switch(settings.color){
-    case 'wh-bl':
-      color = 1;
-      break;
-    case 'bl-wh':
-      color = 2;
-      break;
-    default:
-      color = 0;
-  }
-  
-  console.log('Shape: ' + shape);
-  console.log('Color: ' + color);
   return {
     '0': shape,
     '1': color,
   };
 }
 
-// Takes a JSON message as input.  Sends the message to the watch.
+// Sends the message to the watch.
 function transmitConfiguration(dictionary){
+  console.log('setLocalStorage()');
   console.log('trasmetted configuration: ' + JSON.stringify(dictionary));
   Pebble.sendAppMessage(dictionary, 
     function(e) {
@@ -85,10 +71,12 @@ function setLocalStorage(settings){
   console.log('setLocalStorage()');
 
   var obj = JSON.parse(decodeURIComponent(settings));
-
-  console.log('shape: ' + obj.shape);
+  
   shape = obj.shape;
+  color = obj.color;
+  
   localStorage.setItem('shape', shape);
+  localStorage.setItem('color', color);
 }
 
 Pebble.addEventListener("ready", readyCallback);

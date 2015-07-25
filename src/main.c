@@ -63,32 +63,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   while (t != NULL) {
     // Process this pair's key
     switch (t->key) {
-      case SHAPE_KEY:
+      case SHAPE_KEY: 
         shape = t->value->uint8;
-        if(shape < 1 || shape > 3){
-          shape = 1;
-        }
+        shape = shape % SHAPE_NUM;
         persist_write_int(SHAPE_KEY, shape);
         break;
-  
       case COLOR_KEY:
         color = t->value->uint8;
-        if(color < 1 || color > 2){
-          color = 1;
-        }
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Color: %u", color);
-        break;
-  
-      case BATTERY_KEY:
-        break;
-  
-      case BLUETOOTH_KEY:
-        break;
-  
-      case FLIP_PHONE_KEY:
+        color = color % COLOR_NUM;
+        persist_write_int(COLOR_KEY, color);
         break;
     }
-  
     // Get next pair, if any
     t = dict_read_next(iterator);
   }
@@ -144,6 +129,13 @@ static void update_view(Layer *layer, GContext *gContext){
 
   int currentWidth, currentHeight;
   int widthSingleLayer;
+    
+  // Background
+  graphics_context_set_fill_color(gContext, palette[color].background);
+  graphics_fill_rect(gContext, GRect(0, 0, 144, 168), 0, GCornerNone);
+  
+  graphics_context_set_stroke_color(gContext, palette[color].strokeDot);
+  graphics_context_set_fill_color(gContext, palette[color].fillDot);
   
   for(int j=0; j<2; j++){
     // trick to simulate the round function
@@ -164,32 +156,40 @@ static void update_view(Layer *layer, GContext *gContext){
       }
       currentHeight = s_layerRect[j].origin.y + 24;
       
-      // Draws the bullets
+      // Draws the dots
       if(s_bufferTime[j][i] == 1){
         switch(shape){
-          case 2:     // square
+          case 1:     // square
             graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}});
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight-5}, .size={14,14}});
             break;
-          case 1:
+          case 0:
           default:    // disk
+            graphics_context_set_fill_color(gContext, palette[color].strokeDot);
             graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+            graphics_context_set_fill_color(gContext, palette[color].fillDot);
+            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 6);
             break;
         }
       }else{
         switch(shape){
-          case 2:    // square
+          case 1:    // square
             graphics_draw_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}});
             graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight-5}, .size={14,14}});
             break;
-          case 1:
+          case 0:
           default:    // disc
-            graphics_draw_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+            graphics_context_set_fill_color(gContext, palette[color].strokeDot);
+            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+            graphics_context_set_fill_color(gContext, palette[color].background);
+            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 6);
             break;
         }
       }
-      graphics_context_set_text_color(gContext, GColorBlack);
       
       // Prints texts
+      graphics_context_set_text_color(gContext, palette[color].text);
       graphics_draw_text(gContext, 
                          s_textBase[i], 
                          fonts_get_system_font(FONT_KEY_GOTHIC_14),
@@ -221,13 +221,9 @@ static void window_load(Window *window){
   
   Tuplet initial_values[] = {
     TupletInteger(SHAPE_KEY,      (uint8_t) 0),
-//    TupletInteger(COLOR_KEY,      (uint8_t) 0),
-//    TupletInteger(BATTERY_KEY,    (uint8_t) 0),
-//    TupletInteger(BLUETOOTH_KEY,  (uint8_t) 0),
-//    TupletInteger(FLIP_PHONE_KEY, (uint8_t) 0),
+    TupletInteger(COLOR_KEY,      (uint8_t) 0),
   };
   APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "length values: %lu", (long unsigned int)ARRAY_LENGTH(initial_values));
-    
 }
 
 static void window_unload(){
@@ -248,18 +244,29 @@ static void init(){
   // Open AppMessage to transfers
   app_message_open(64, 64);
   
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Init prev shape: %u", shape);
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Init curr shape: %u", shape);
-    if(shape < 1 && shape > 3){
-      shape = 2;
-    }
-	}else{
-    shape = 1;
+    shape = shape % SHAPE_NUM;
+  }else{
+    shape = 0;
   }
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Init next shape: %u", shape);
+  if(persist_exists(COLOR_KEY)){
+		color = persist_read_int(COLOR_KEY);
+    color = color % COLOR_NUM;
+  }else{
+    color = 0;
+  }
   
+  // Create the colors palette
+  #ifdef PBL_COLOR
+    palette[0] = (Color){GColorWhite, GColorBlack, GColorBlack, GColorDarkGray};
+    palette[1] = (Color){GColorBlack, GColorWhite, GColorLightGray, GColorWhite};
+    palette[2] = (Color){GColorCeleste, GColorDukeBlue, GColorDukeBlue, GColorBlueMoon};
+  #else
+    palette[0] = (Color){GColorWhite, GColorBlack, GColorBlack, GColorBlack};
+    palette[1] = (Color){GColorBlack, GColorWhite, GColorWhite, GColorWhite};
+  #endif
+    
   // Create main window view
   s_window = window_create();
   window_set_background_color(s_window, GColorWhite);
