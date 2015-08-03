@@ -1,17 +1,31 @@
 
-var PBL_COLOR, shape, color;
+var platform, shape, color, number;
+var version = '2.5';
 
 function readConfig(){
   console.log('readConfig()');
+  console.log(Pebble.getActiveWatchInfo().platform);
+  if(Pebble.getActiveWatchInfo && Pebble.getActiveWatchInfo().platform === 'basalt') {
+    // This is the Basalt platform
+    console.log('PebbleKit JS ready on Basalt!');
+    platform = 1;
+  } else {
+    // This is the Aplite platform
+    console.log('PebbleKit JS ready on Aplite!');
+    platform = 0;
+  }
   shape = localStorage.getItem('shape');
   shape = shape ? shape : 0;
+  color = localStorage.getItem('color');
   color = color ? color : 0;
+  number = localStorage.getItem('number');
+  number = number ? number : 0;
 }
 
 function readyCallback(event){
   console.log('readyCallback()');
   readConfig();
-  var jsonConfig = JSON.parse('{"shape":'+shape+',"color":'+color+'}');
+  var jsonConfig = JSON.parse('{"shape":'+shape+',"color":'+color+'"number":'+number+'}');
   Pebble.sendAppMessage(jsonConfig);
 }
 
@@ -22,7 +36,7 @@ function appMessage(event){
 function showConfiguration(event){
   console.log('showConfiguration()');
   readConfig();
-  var attributes = '?shape='+shape+'&color='+color;
+  var attributes = '?platform='+platform+'&version='+version+'&shape='+shape+'&color='+color+'&number='+number;
   var url = 'http://delda.github.io/pebble_binaryWatch/index.html'+attributes;
   console.log("url: " + url);
   Pebble.openURL(url);
@@ -37,26 +51,29 @@ function webViewClosed(event){
   setLocalStorage(resp);
 }
 
-// Format sent back from the configuration web UI
+// Format sent BACK from the configuration web UI
 function prepareConfiguration(serialized_settings){
   console.log('prepareConfiguration');
   var settings = JSON.parse(serialized_settings);
   var shape = 0;
   var color = 0;
+  var number = 0;
 
   shape = (settings.shape) ? Number(settings.shape) : 0;
   color = (settings.color) ? Number(settings.color) : 0;
+  number = (settings.number) ? Number(settings.number) : 0;
   
   return {
     '0': shape,
     '1': color,
+    '2': number,
   };
 }
 
 // Sends the message to the watch.
 function transmitConfiguration(dictionary){
-  console.log('setLocalStorage()');
-  console.log('trasmetted configuration: ' + JSON.stringify(dictionary));
+  console.log('trasmettedConfiguration()');
+  console.log(JSON.stringify(dictionary));
   Pebble.sendAppMessage(dictionary, 
     function(e) {
       console.log('Send successful: ' + JSON.stringify(e));
@@ -74,9 +91,11 @@ function setLocalStorage(settings){
   
   shape = obj.shape;
   color = obj.color;
+  number = obj.number;
   
   localStorage.setItem('shape', shape);
   localStorage.setItem('color', color);
+  localStorage.setItem('number', number);
 }
 
 Pebble.addEventListener("ready", readyCallback);

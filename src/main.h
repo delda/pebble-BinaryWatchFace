@@ -9,12 +9,14 @@ static char bufferTime[20];
 static int s_bulletsNumber[2];
 static TextLayer *s_backgrounLayer;
 static GRect s_layerRect[2];
+unsigned int hour, minute;
 
 static AppSync sync;
 static uint8_t sync_buffer[32];
 
 static int shape = 0;
 static int color = 0;
+static int number = 0;
 static int dotIndex = 0;
 
 static GColor backgroundColor;
@@ -23,6 +25,7 @@ static GColor textColor;
 enum appParameters {
   SHAPE_KEY      = 0x0,
   COLOR_KEY      = 0x1,
+  NUMBER_KEY     = 0x2,
 /*  BATTERY_KEY    = 0x2,
   BLUETOOTH_KEY  = 0x3,
   FLIP_PHONE_KEY = 0x4,*/
@@ -33,6 +36,7 @@ typedef struct{
   GColor text;
   GColor strokeDot;
   GColor fillDot;
+  GColor time;
 } Color;
 
 #ifdef PBL_COLOR
