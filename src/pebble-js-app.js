@@ -1,6 +1,5 @@
-
 var platform, shape, color, number;
-var version = '2.5';
+var version = '2.6';
 
 function readConfig(){
   console.log('readConfig()');

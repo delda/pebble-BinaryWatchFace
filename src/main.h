@@ -40,9 +40,9 @@ typedef struct{
 } Color;
 
 #ifdef PBL_COLOR
-  static int SHAPE_NUM = 3;
-  static int COLOR_NUM = 2;
-  static Color palette[3];
+  static int SHAPE_NUM = 2;
+  static int COLOR_NUM = 8;
+  static Color palette[8];
 #else
   static int SHAPE_NUM = 2;
   static int COLOR_NUM = 2;

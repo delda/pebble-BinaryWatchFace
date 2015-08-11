@@ -6,19 +6,22 @@ char *logTime(){
   return bufferTime;
 }
 
-void dec2bin(int num, int hORm){
+void dec2binTime(int hour, int minute){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   int bufferSize = 6;
   int d;
-
-  for(int i=bufferSize; i>=0; i--){
-    d = num >> i;
-    if(d & 1){
-      s_bufferTime[hORm][i] = 1;
-    }else{
-      s_bufferTime[hORm][i] = 0;
-    }
+  int time[] = {hour, minute};
+  
+  for(int i=0; i<2; i++){
+    for(int j=bufferSize-1; j>=0; j--){
+      d = time[i] >> j;
+      if(d & 1){
+        s_bufferTime[i][j] = 1;
+      }else{
+        s_bufferTime[i][j] = 0;
+      }
+    }    
   }
 }
 
@@ -51,6 +54,16 @@ char *debug_dictionary_result( DictionaryResult result ) {
 		case DICT_MALLOC_FAILED: return"DICT_MALLOC_FAILED";
     default: return "UNKNOW ERROR";
 	}
+}
+
+static void bluetooth_handler(bool connected){
+  // Show current connection state
+  if (connected) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth CONNECTED");
+  } else {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth DISCONNECTED");
+    vibes_long_pulse();
+  }
 }
 
 static void fill_number(int number, GPoint position, GContext *gContext){
@@ -323,12 +336,7 @@ static void update_time(){
   }
   minute = cTime->tm_min;
   
-  dec2bin(hour, 0);
-  // NB: trick to avoid minute = 0 and number = 0 after the first for cycle
-  int minute_tmp = minute;
-  int number_tmp = number;
-  dec2bin(minute_tmp, 1);
-  number = number_tmp;
+  dec2binTime(hour, minute);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
@@ -344,10 +352,13 @@ static void update_view(Layer *layer, GContext *gContext){
   int currentWidth, currentHeight;
   int widthSingleLayer;
     
+  //color = (color+1) % COLOR_NUM;
+  APP_LOG(APP_LOG_LEVEL_ERROR, "color: %d", color);
+  
   // Background
   graphics_context_set_fill_color(gContext, palette[color].background);
   graphics_fill_rect(gContext, GRect(0, 0, 144, 168), 0, GCornerNone);
-    
+  
   // Time in background
   if(number > 0){
     #ifdef PBL_COLOR
@@ -451,10 +462,12 @@ static void window_load(Window *window){
   
   layer_set_update_proc(s_mainLayer, update_view);
   
+  bluetooth_handler(bluetooth_connection_service_peek());
+  
   Tuplet initial_values[] = {
     TupletInteger(SHAPE_KEY,      (uint8_t) 0),
     TupletInteger(COLOR_KEY,      (uint8_t) 0),
-    TupletInteger(NUMBER_KEY,     (uint8_t) 0),
+    TupletInteger(NUMBER_KEY,     (uint8_t) 1),
   };
   APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "length values: %lu", (long unsigned int)ARRAY_LENGTH(initial_values));
 }
@@ -487,20 +500,26 @@ static void init(){
 		color = persist_read_int(COLOR_KEY);
     color = color % COLOR_NUM;
   }else{
-    color = 0;
+    color = 1;
   }
   if(persist_exists(NUMBER_KEY)){
 		number = persist_read_int(NUMBER_KEY);
     number = number % 2;
   }else{
-    number = 0;
+    number = 1;
   }
   
   // Create the colors palette
   #ifdef PBL_COLOR
-    palette[0] = (Color){GColorWhite, GColorBlack, GColorBlack, GColorDarkGray, GColorLightGray};
-    palette[1] = (Color){GColorBlack, GColorWhite, GColorLightGray, GColorWhite, GColorDarkGray};
-    palette[2] = (Color){GColorCeleste, GColorDukeBlue, GColorDukeBlue, GColorBlueMoon, GColorCyan};
+  //                     background           text                 strokeDot            fillDot                  time background
+    palette[0] = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorDarkGray,          GColorLightGray};
+    palette[1] = (Color){GColorBlack,         GColorWhite,         GColorLightGray,     GColorWhite,             GColorDarkGray};
+    palette[2] = (Color){GColorCeleste,       GColorDukeBlue,      GColorDukeBlue,      GColorBlueMoon,          GColorCyan};
+    palette[3] = (Color){GColorOxfordBlue,    GColorCeleste,       GColorTiffanyBlue,   GColorCeleste,           GColorBlue};
+    palette[4] = (Color){GColorMelon,         GColorBulgarianRose, GColorBulgarianRose, GColorDarkCandyAppleRed, GColorSunsetOrange};
+    palette[5] = (Color){GColorBulgarianRose, GColorMelon,         GColorSunsetOrange,  GColorMelon,             GColorDarkCandyAppleRed};
+    palette[6] = (Color){GColorInchworm,      GColorDarkGreen,     GColorDarkGreen,     GColorMayGreen,          GColorBrightGreen};
+    palette[7] = (Color){GColorDarkGreen,     GColorScreaminGreen, GColorGreen,         GColorScreaminGreen,     GColorKellyGreen};
   #else
     palette[0] = (Color){GColorWhite, GColorBlack, GColorBlack, GColorBlack, GColorBlack};
     palette[1] = (Color){GColorBlack, GColorWhite, GColorWhite, GColorWhite, GColorWhite};
@@ -519,7 +538,11 @@ static void init(){
   // Show the window on the watch
   window_stack_push(s_window, true);
   
+  // Update on new time
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  
+  // Subscribe to Bluetooth updates
+  //bluetooth_connection_service_subscribe(bluetooth_handler);
 }
 
 static void deinit(){
