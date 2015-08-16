@@ -1,5 +1,5 @@
-var platform, shape, color, number;
-var version = '2.6';
+var platform, shape, color, number, bluetooth;
+var version = '2.7';
 
 function readConfig(){
   console.log('readConfig()');
@@ -19,12 +19,14 @@ function readConfig(){
   color = color ? color : 0;
   number = localStorage.getItem('number');
   number = number ? number : 0;
+  bluetooth = localStorage.getItem('bluetooth');
+  bluetooth = bluetooth ? bluetooth : 0;  
 }
 
 function readyCallback(event){
   console.log('readyCallback()');
   readConfig();
-  var jsonConfig = JSON.parse('{"shape":'+shape+',"color":'+color+'"number":'+number+'}');
+  var jsonConfig = JSON.parse('{"shape":'+shape+',"color":'+color+',"number":'+number+',"bluetooth":'+bluetooth+'}');
   Pebble.sendAppMessage(jsonConfig);
 }
 
@@ -35,7 +37,7 @@ function appMessage(event){
 function showConfiguration(event){
   console.log('showConfiguration()');
   readConfig();
-  var attributes = '?platform='+platform+'&version='+version+'&shape='+shape+'&color='+color+'&number='+number;
+  var attributes = '?platform='+platform+'&version='+version+'&shape='+shape+'&color='+color+'&number='+number+'&bluetooth='+bluetooth;
   var url = 'http://delda.github.io/pebble_binaryWatch/index.html'+attributes;
   console.log("url: " + url);
   Pebble.openURL(url);
@@ -57,15 +59,18 @@ function prepareConfiguration(serialized_settings){
   var shape = 0;
   var color = 0;
   var number = 0;
+  var bluetooth = 0;
 
   shape = (settings.shape) ? Number(settings.shape) : 0;
   color = (settings.color) ? Number(settings.color) : 0;
   number = (settings.number) ? Number(settings.number) : 0;
+  bluetooth = (settings.bluetooth) ? Number(settings.bluetooth) : 0;
   
   return {
     '0': shape,
     '1': color,
     '2': number,
+    '3': bluetooth,
   };
 }
 
@@ -91,10 +96,12 @@ function setLocalStorage(settings){
   shape = obj.shape;
   color = obj.color;
   number = obj.number;
+  bluetooth = obj.bluetooth;
   
   localStorage.setItem('shape', shape);
   localStorage.setItem('color', color);
   localStorage.setItem('number', number);
+  localStorage.setItem('bluetooth', bluetooth);
 }
 
 Pebble.addEventListener("ready", readyCallback);

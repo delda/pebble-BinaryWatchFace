@@ -17,17 +17,32 @@ static uint8_t sync_buffer[32];
 static int shape = 0;
 static int color = 0;
 static int number = 0;
+static int bluetooth = 0;
+static int bluetooth_status = 0;
 static int dotIndex = 0;
 
 static GColor backgroundColor;
 static GColor textColor;
 
+// bluetooth
+static GBitmap *bt_bitmap;
+static BitmapLayer *bt_layer;
+static int BT_NEVER         = 0;
+static int BT_ON_DISCONNECT = 1;
+static int BT_ALWAYS        = 2;
+// Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
+static const uint32_t const segments[] = { 200, 100, 400 };
+VibePattern pat = {
+  .durations = segments,
+  .num_segments = ARRAY_LENGTH(segments),
+};
+
 enum appParameters {
   SHAPE_KEY      = 0x0,
   COLOR_KEY      = 0x1,
   NUMBER_KEY     = 0x2,
+  BLUETOOTH_KEY  = 0X3,
 /*  BATTERY_KEY    = 0x2,
-  BLUETOOTH_KEY  = 0x3,
   FLIP_PHONE_KEY = 0x4,*/
 };
   
@@ -48,17 +63,3 @@ typedef struct{
   static int COLOR_NUM = 2;
   static Color palette[2];
 #endif
-
-/*
-Themes:
-01 LITE    white
-02 DARK    dark
-03         celeste
-04         celeste inverted
-05 PASSION red
-06 LOVE    red inverted
-07         green
-08         green inverted
-09 ALL     all the themes, one at minute
-10 RANDOM  random colors
-*/

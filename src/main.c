@@ -57,16 +57,21 @@ char *debug_dictionary_result( DictionaryResult result ) {
 }
 
 static void bluetooth_handler(bool connected){
-  // Show current connection state
-  if (connected) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth CONNECTED");
-  } else {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Bluetooth DISCONNECTED");
-    vibes_long_pulse();
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  bluetooth_status = connected;
+  if(bluetooth != BT_NEVER){
+    if(bluetooth_status == 0){
+      vibes_enqueue_custom_pattern(pat);
+    }else if(bluetooth == BT_ALWAYS){
+      vibes_enqueue_custom_pattern(pat);
+    }
   }
 }
 
 static void fill_number(int number, GPoint position, GContext *gContext){
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
   switch(number){
     case 0:
       graphics_fill_rect(gContext, GRect(position.x +  0, position.y +  0, 60, 14), 0, GCornerNone);
@@ -136,6 +141,7 @@ static void fill_number(int number, GPoint position, GContext *gContext){
 }
 
 static void draw_number(int number, GPoint position, GContext *gContext){
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   switch(number){
     case 0:
       graphics_draw_line(gContext, GPoint(position.x +  0, position.y +  0), GPoint(position.x + 60, position.y +  0));
@@ -298,6 +304,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_write_int(NUMBER_KEY, number);
         APP_LOG(APP_LOG_LEVEL_DEBUG, "number: %d", number);
         break;
+      case BLUETOOTH_KEY:
+        bluetooth = t->value->uint8;
+        bluetooth = bluetooth % 3;
+        persist_write_int(BLUETOOTH_KEY, bluetooth);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "bluetooth: %d", bluetooth);
+        break;      
     }
     // Get next pair, if any
     t = dict_read_next(iterator);
@@ -443,6 +455,26 @@ static void update_view(Layer *layer, GContext *gContext){
                         ); 
     }
   }
+  
+  // Bluetooth
+  bt_bitmap = 0;
+  if(bluetooth != BT_NEVER){
+    if(bluetooth_status == 0){
+      bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
+    }else if(bluetooth == BT_ALWAYS){
+      bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
+    }
+  }
+  if(bt_bitmap){
+    bt_layer = bitmap_layer_create(GRect(5, 5, 10, 16));
+    #ifdef PBL_PLATFORM_APLITE
+      bitmap_layer_set_compositing_mode(bt_layer, GCompOpAssign);
+    #elif PBL_PLATFORM_BASALT
+      bitmap_layer_set_compositing_mode(bt_layer, GCompOpSet);
+    #endif
+    bitmap_layer_set_bitmap(bt_layer, bt_bitmap);
+    layer_add_child(window_get_root_layer(s_window), bitmap_layer_get_layer(bt_layer));
+  }
 }
 
 static void window_load(Window *window){
@@ -468,6 +500,7 @@ static void window_load(Window *window){
     TupletInteger(SHAPE_KEY,      (uint8_t) 0),
     TupletInteger(COLOR_KEY,      (uint8_t) 0),
     TupletInteger(NUMBER_KEY,     (uint8_t) 1),
+    TupletInteger(BLUETOOTH_KEY,  (uint8_t) 1),
   };
   APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "length values: %lu", (long unsigned int)ARRAY_LENGTH(initial_values));
 }
@@ -500,13 +533,19 @@ static void init(){
 		color = persist_read_int(COLOR_KEY);
     color = color % COLOR_NUM;
   }else{
-    color = 1;
+    color = 0;
   }
   if(persist_exists(NUMBER_KEY)){
 		number = persist_read_int(NUMBER_KEY);
     number = number % 2;
   }else{
     number = 1;
+  }
+  if(persist_exists(BLUETOOTH_KEY)){
+    bluetooth = persist_read_int(BLUETOOTH_KEY);
+    bluetooth = bluetooth % 2;
+  }else{
+    bluetooth = 1;
   }
   
   // Create the colors palette
@@ -542,7 +581,7 @@ static void init(){
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   
   // Subscribe to Bluetooth updates
-  //bluetooth_connection_service_subscribe(bluetooth_handler);
+  bluetooth_connection_service_subscribe(bluetooth_handler);
 }
 
 static void deinit(){
