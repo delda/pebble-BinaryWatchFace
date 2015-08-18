@@ -59,14 +59,12 @@ char *debug_dictionary_result( DictionaryResult result ) {
 static void bluetooth_handler(bool connected){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  bluetooth_status = connected;
-  if(bluetooth != BT_NEVER){
-    if(bluetooth_status == 0){
-      vibes_enqueue_custom_pattern(pat);
-    }else if(bluetooth == BT_ALWAYS){
-      vibes_enqueue_custom_pattern(pat);
-    }
+  bluetooth_status = connected ? 1 : 0;
+  if(bluetooth != BT_NEVER && bluetooth_status == 0){
+    vibes_enqueue_custom_pattern(bt_vibe);
   }
+
+  layer_mark_dirty(s_mainLayer);
 }
 
 static void fill_number(int number, GPoint position, GContext *gContext){
@@ -364,9 +362,6 @@ static void update_view(Layer *layer, GContext *gContext){
   int currentWidth, currentHeight;
   int widthSingleLayer;
     
-  //color = (color+1) % COLOR_NUM;
-  APP_LOG(APP_LOG_LEVEL_ERROR, "color: %d", color);
-  
   // Background
   graphics_context_set_fill_color(gContext, palette[color].background);
   graphics_fill_rect(gContext, GRect(0, 0, 144, 168), 0, GCornerNone);
@@ -457,23 +452,24 @@ static void update_view(Layer *layer, GContext *gContext){
   }
   
   // Bluetooth
-  bt_bitmap = 0;
+  gbitmap_destroy(bt_bitmap);
+  bt_bitmap = NULL;
   if(bluetooth != BT_NEVER){
     if(bluetooth_status == 0){
       bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
+      printf("RESOURCE_ID_BLUETOOTH_OFF_IMG");
     }else if(bluetooth == BT_ALWAYS){
       bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
+      printf("RESOURCE_ID_BLUETOOTH_ON_IMG");
     }
   }
   if(bt_bitmap){
-    bt_layer = bitmap_layer_create(GRect(5, 5, 10, 16));
     #ifdef PBL_PLATFORM_APLITE
-      bitmap_layer_set_compositing_mode(bt_layer, GCompOpAssign);
+      graphics_context_set_compositing_mode(gContext, GCompOpAssign);
     #elif PBL_PLATFORM_BASALT
-      bitmap_layer_set_compositing_mode(bt_layer, GCompOpSet);
+      graphics_context_set_compositing_mode(gContext, GCompOpSet);
     #endif
-    bitmap_layer_set_bitmap(bt_layer, bt_bitmap);
-    layer_add_child(window_get_root_layer(s_window), bitmap_layer_get_layer(bt_layer));
+    graphics_draw_bitmap_in_rect(gContext, bt_bitmap, GRect(5, 5, 10, 16));
   }
 }
 
@@ -500,7 +496,7 @@ static void window_load(Window *window){
     TupletInteger(SHAPE_KEY,      (uint8_t) 0),
     TupletInteger(COLOR_KEY,      (uint8_t) 0),
     TupletInteger(NUMBER_KEY,     (uint8_t) 1),
-    TupletInteger(BLUETOOTH_KEY,  (uint8_t) 1),
+    TupletInteger(BLUETOOTH_KEY,  (uint8_t) 2),
   };
   APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "length values: %lu", (long unsigned int)ARRAY_LENGTH(initial_values));
 }
@@ -543,9 +539,9 @@ static void init(){
   }
   if(persist_exists(BLUETOOTH_KEY)){
     bluetooth = persist_read_int(BLUETOOTH_KEY);
-    bluetooth = bluetooth % 2;
+    bluetooth = bluetooth % BLUETOOTH_OPTIONS;
   }else{
-    bluetooth = 1;
+    bluetooth = 2;
   }
   
   // Create the colors palette
