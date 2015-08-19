@@ -543,7 +543,7 @@ static void init(){
   }else{
     bluetooth = 2;
   }
-  
+
   // Create the colors palette
   #ifdef PBL_COLOR
   //                     background           text                 strokeDot            fillDot                  time background

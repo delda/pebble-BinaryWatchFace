@@ -31,7 +31,7 @@ static int BT_NEVER         = 0;
 static int BT_ON_DISCONNECT = 1;
 static int BT_ALWAYS        = 2;
 // Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
-static const uint32_t const segments[] = { 400, 400, 400 };
+static const uint32_t const segments[] = { 500, 500, 500 };
 VibePattern bt_vibe = {
   .durations = segments,
   .num_segments = ARRAY_LENGTH(segments),
