@@ -9,6 +9,11 @@
     "resources": {
         "media": [
             {
+                "file": "fonts/OpenSans-Regular.ttf",
+                "name": "FONT_OPEN_SANS_REGULAR_10",
+                "type": "font"
+            },
+            {
                 "file": "images/Bluetooth_off_10x16.png",
                 "name": "BLUETOOTH_OFF_IMG",
                 "type": "png"
@@ -33,7 +38,7 @@
         "basalt"
     ],
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
-    "versionLabel": "2.7",
+    "versionLabel": "2.8",
     "watchapp": {
         "watchface": true
     }

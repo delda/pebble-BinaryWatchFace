@@ -1,9 +1,8 @@
-var platform, shape, color, number, bluetooth;
-var version = '2.7';
+var platform, shape, color, number, bluetooth, battery, battery_modality, date, locale;
+var version = '2.9';
 
 function readConfig(){
   console.log('readConfig()');
-  console.log(Pebble.getActiveWatchInfo().platform);
   if(Pebble.getActiveWatchInfo && Pebble.getActiveWatchInfo().platform === 'basalt') {
     // This is the Basalt platform
     console.log('PebbleKit JS ready on Basalt!');
@@ -15,18 +14,52 @@ function readConfig(){
   }
   shape = localStorage.getItem('shape');
   shape = shape ? shape : 0;
-  color = localStorage.getItem('color');
+  
+  if(localStorage.key('color')){
+    color = localStorage.getItem('color');
+  }
   color = color ? color : 0;
-  number = localStorage.getItem('number');
+  
+  if(localStorage.getItem('number')){
+    number = localStorage.getItem('number');
+  }
   number = number ? number : 0;
-  bluetooth = localStorage.getItem('bluetooth');
-  bluetooth = bluetooth ? bluetooth : 0;  
+  
+  if(localStorage.getItem('bluetooth')){
+    bluetooth = localStorage.getItem('bluetooth');
+  }
+  bluetooth = bluetooth ? bluetooth : 0;
+  
+  if(localStorage.getItem('battery')){
+    battery = localStorage.getItem('battery');
+  }
+  battery = battery ? battery : 0;
+  
+  if(localStorage.getItem('battery_modality')){
+    battery_modality = localStorage.getItem('battery_modality');
+  }
+  battery_modality = battery_modality ? battery_modality : 0;
+  
+  locale = (Pebble.getActiveWatchInfo()) ? Pebble.getActiveWatchInfo().language : 'en_US';
+
+  if(localStorage.getItem('date')){
+    date = localStorage.getItem('date');
+  }
+  date = date ? date : 0;
 }
 
 function readyCallback(event){
   console.log('readyCallback()');
   readConfig();
-  var jsonConfig = JSON.parse('{"shape":'+shape+',"color":'+color+',"number":'+number+',"bluetooth":'+bluetooth+'}');
+  var jsonConfig = JSON.parse('{"shape":'+shape+
+                              ',"color":'+color+
+                              ',"number":'+number+
+                              ',"bluetooth":'+bluetooth+
+                              ',"battery":'+battery+
+                              ',"battery_modality":'+battery_modality+
+                              ',"date":'+date+
+                              ',"locale":'+locale+
+                              '}');
   Pebble.sendAppMessage(jsonConfig);
 }
 
@@ -37,7 +70,16 @@ function appMessage(event){
 function showConfiguration(event){
   console.log('showConfiguration()');
   readConfig();
-  var attributes = '?platform='+platform+'&version='+version+'&shape='+shape+'&color='+color+'&number='+number+'&bluetooth='+bluetooth;
+  var attributes = '?platform='+platform+
+      '&version='+version+
+      '&shape='+shape+
+      '&color='+color+
+      '&number='+number+
+      '&bluetooth='+bluetooth+
+      '&battery='+battery+
+      '&battery_modality='+battery_modality+
+      '&date='+date+
+      '&locale='+locale;
   var url = 'http://delda.github.io/pebble_binaryWatch/index.html'+attributes;
   console.log("url: " + url);
   Pebble.openURL(url);
@@ -60,23 +102,34 @@ function prepareConfiguration(serialized_settings){
   var color = 0;
   var number = 0;
   var bluetooth = 0;
+  var battery = 0;
+  var battery_modality = 0;
+  var date = 0;
+  console.log('battery_modality: ' + battery_modality);
 
-  shape = (settings.shape) ? Number(settings.shape) : 0;
-  color = (settings.color) ? Number(settings.color) : 0;
-  number = (settings.number) ? Number(settings.number) : 0;
-  bluetooth = (settings.bluetooth) ? Number(settings.bluetooth) : 0;
+  shape            = (settings.shape)            ? Number(settings.shape)            : 0;
+  color            = (settings.color)            ? Number(settings.color)            : 0;
+  number           = (settings.number)           ? Number(settings.number)           : 0;
+  bluetooth        = (settings.bluetooth)        ? Number(settings.bluetooth)        : 0;
+  battery          = (settings.battery)          ? Number(settings.battery)          : 0;
+  battery_modality = (settings.battery_modality) ? Number(settings.battery_modality) : 0;
+  date             = (settings.date)             ? Number(settings.date)             : 0;
+  console.log('battery_modality: ' + battery_modality);
   
   return {
     '0': shape,
     '1': color,
     '2': number,
     '3': bluetooth,
+    '4': battery,
+    '5': battery_modality,
+    '6': date,
   };
 }
 
-// Sends the message to the watch.
+// Sends the message to the watch
 function transmitConfiguration(dictionary){
-  console.log('trasmettedConfiguration()');
+  console.log('transmitConfiguration');
   console.log(JSON.stringify(dictionary));
   Pebble.sendAppMessage(dictionary, 
     function(e) {
@@ -93,15 +146,21 @@ function setLocalStorage(settings){
 
   var obj = JSON.parse(decodeURIComponent(settings));
   
-  shape = obj.shape;
-  color = obj.color;
-  number = obj.number;
-  bluetooth = obj.bluetooth;
+  shape            = obj.shape;
+  color            = obj.color;
+  number           = obj.number;
+  bluetooth        = obj.bluetooth;
+  battery          = obj.battery;
+  battery_modality = obj.battery_modality;
+  date             = obj.date;
   
-  localStorage.setItem('shape', shape);
-  localStorage.setItem('color', color);
-  localStorage.setItem('number', number);
-  localStorage.setItem('bluetooth', bluetooth);
+  localStorage.setItem('shape',            shape);
+  localStorage.setItem('color',            color);
+  localStorage.setItem('number',           number);
+  localStorage.setItem('bluetooth',        bluetooth);
+  localStorage.setItem('battery',          battery);
+  localStorage.setItem('battery_modality', battery_modality);
+  localStorage.setItem('date',             date);
 }
 
 Pebble.addEventListener("ready", readyCallback);

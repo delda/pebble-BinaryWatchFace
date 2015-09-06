@@ -56,6 +56,13 @@ char *debug_dictionary_result( DictionaryResult result ) {
 	}
 }
 
+static void battery_callback(BatteryChargeState state) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  battery_level = (int)state.charge_percent;
+  layer_mark_dirty(s_mainLayer);
+}
+
 static void bluetooth_handler(bool connected){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
@@ -274,6 +281,129 @@ static void draw_number(int number, GPoint position, GContext *gContext){
   }
 }
 
+static void get_date_format(int dateKey){
+  APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  time_t rawtime;
+  struct tm *info;
+  
+  time(&rawtime);
+  info = localtime(&rawtime);
+  switch(dateKey){
+    case 0:
+      strftime(date_buffer, sizeof(date_buffer), " ", info);
+      break;
+    case 1:
+      strftime(date_buffer, sizeof(date_buffer), "%d-%m-%y", info);
+      break;
+    case 2:
+      strftime(date_buffer, sizeof(date_buffer), "%d.%m.%y", info);
+      break;
+    case 3:
+      strftime(date_buffer, sizeof(date_buffer), "%d/%m/%y", info);
+      break;
+    case 4:
+      strftime(date_buffer, sizeof(date_buffer), "%d %m %y", info);
+      break;
+    case 5:
+      strftime(date_buffer, sizeof(date_buffer), "%d-%m-%Y", info);
+      break;
+    case 6:
+      strftime(date_buffer, sizeof(date_buffer), "%d.%m.%Y", info);
+      break;
+    case 7:
+      strftime(date_buffer, sizeof(date_buffer), "%d/%m/%Y", info);
+      break;
+    case 8:
+      strftime(date_buffer, sizeof(date_buffer), "%d %m %Y", info);
+      break;
+    case 9:
+      strftime(date_buffer, sizeof(date_buffer), "%m-%d-%Y", info);
+      break;
+    case 10:
+      strftime(date_buffer, sizeof(date_buffer), "%m.%d.%Y", info);
+      break;
+    case 11:
+      strftime(date_buffer, sizeof(date_buffer), "%m/%d/%Y", info);
+      break;
+    case 12:
+      strftime(date_buffer, sizeof(date_buffer), "%m %d %Y", info);
+      break;
+    case 13:
+      strftime(date_buffer, sizeof(date_buffer), "%Y-%m-%d", info);
+      break;
+    case 14:
+      strftime(date_buffer, sizeof(date_buffer), "%Y.%m.%d", info);
+      break;
+    case 15:
+      strftime(date_buffer, sizeof(date_buffer), "%Y/%m/%d", info);
+      break;
+    case 16:
+      strftime(date_buffer, sizeof(date_buffer), "%Y %m %d", info);
+      break;
+    case 17:
+      strftime(date_buffer, sizeof(date_buffer), "%b/%d/%Y", info);
+      break;
+    case 18:
+      strftime(date_buffer, sizeof(date_buffer), "%b %e, %Y", info);
+      break;
+    case 19:
+      strftime(date_buffer, sizeof(date_buffer), "%d %b %Y", info);
+      break;
+    case 20:
+      strftime(date_buffer, sizeof(date_buffer), "%d %b, %Y", info);
+      break;
+    case 21:
+      strftime(date_buffer, sizeof(date_buffer), "%a, %b/%d/%Y", info);
+      break;
+    case 22:
+      strftime(date_buffer, sizeof(date_buffer), "%a, %b %e, %Y", info);
+      break;
+    case 23:
+      strftime(date_buffer, sizeof(date_buffer), "%a, %d %b %Y", info);
+      break;
+    case 24:
+      strftime(date_buffer, sizeof(date_buffer), "%a, %d %b, %Y", info);
+      break;
+    case 25:
+      strftime(date_buffer, sizeof(date_buffer), "%e %B %Y", info);
+      break;
+    case 26:
+      strftime(date_buffer, sizeof(date_buffer), "%d %B %Y", info);
+      break;
+    case 27:
+      strftime(date_buffer, sizeof(date_buffer), "%B %d, %Y", info);
+      break;
+    case 28:
+      strftime(date_buffer, sizeof(date_buffer), "%B-%d-%Y", info);
+      break;
+    case 29:
+      strftime(date_buffer, sizeof(date_buffer), "%a,\n%e %B %Y", info);
+      break;
+    case 30:
+      strftime(date_buffer, sizeof(date_buffer), "%a,\n%d %B %Y", info);
+      break;
+    case 31:
+      strftime(date_buffer, sizeof(date_buffer), "%a,\n%B %d, %Y", info);
+      break;
+    case 32:
+      strftime(date_buffer, sizeof(date_buffer), "%a,\n%B-%d-%Y", info);
+      break;
+    case 33:
+      strftime(date_buffer, sizeof(date_buffer), "%A,\n%e %B %Y", info);
+      break;
+    case 34:
+      strftime(date_buffer, sizeof(date_buffer), "%A,\n%d %B %Y", info);
+      break;
+    case 35:
+      strftime(date_buffer, sizeof(date_buffer), "%A,\n%B %d, %Y", info);
+      break;
+    case 36:
+      strftime(date_buffer, sizeof(date_buffer), "%A,\n%B-%d-%Y", info);
+      break;
+  }
+}
+
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
@@ -308,6 +438,24 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_write_int(BLUETOOTH_KEY, bluetooth);
         APP_LOG(APP_LOG_LEVEL_DEBUG, "bluetooth: %d", bluetooth);
         break;      
+      case BATTERY_KEY:
+        battery = t->value->uint8;
+        battery = battery % 3;
+        persist_write_int(BATTERY_KEY, battery);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "battery: %d", battery);
+        break;
+      case BATTERY_MOD_KEY:
+        battery_modality = t->value->uint8;
+        battery_modality = battery_modality % 2;
+        persist_write_int(BATTERY_MOD_KEY, battery_modality);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "battery_modality: %d", battery_modality);
+        break;
+      case DATE_KEY:
+        date = t->value->uint8;
+        date = date % DATE_OPTIONS;
+        persist_write_int(DATE_KEY, date);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "date: %d", date);
+        break;
     }
     // Get next pair, if any
     t = dict_read_next(iterator);
@@ -447,7 +595,7 @@ static void update_view(Layer *layer, GContext *gContext){
                          GTextOverflowModeWordWrap,
                          GTextAlignmentCenter,
                          NULL
-                        ); 
+                        );
     }
   }
   
@@ -457,10 +605,8 @@ static void update_view(Layer *layer, GContext *gContext){
   if(bluetooth != BT_NEVER){
     if(bluetooth_status == 0){
       bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
-      printf("RESOURCE_ID_BLUETOOTH_OFF_IMG");
     }else if(bluetooth == BT_ALWAYS){
       bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
-      printf("RESOURCE_ID_BLUETOOTH_ON_IMG");
     }
   }
   if(bt_bitmap){
@@ -471,6 +617,71 @@ static void update_view(Layer *layer, GContext *gContext){
     #endif
     graphics_draw_bitmap_in_rect(gContext, bt_bitmap, GRect(5, 5, 10, 16));
   }
+  
+  // Battery
+  if(battery != BA_NEVER){
+    #ifdef PBL_PLATFORM_APLITE
+      graphics_context_set_stroke_color(gContext, palette[color].text);
+      graphics_context_set_fill_color(gContext, palette[color].text);
+      graphics_context_set_text_color(gContext, palette[color].text);
+    #elif PBL_PLATFORM_BASALT
+      if(battery_level < BA_PERCENT_WARNING){
+        graphics_context_set_fill_color(gContext, GColorRed);
+        graphics_context_set_stroke_color(gContext, GColorRed);
+        graphics_context_set_text_color(gContext, GColorRed);
+      }else{
+        graphics_context_set_fill_color(gContext, palette[color].text);
+        graphics_context_set_stroke_color(gContext, palette[color].text);
+        graphics_context_set_text_color(gContext, palette[color].text);
+      }
+    #endif
+    
+    if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
+      int x = 115;
+      int y = 7;
+      int z;
+      if(battery_modality == 0){
+        graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={23,13}});
+        graphics_draw_line(gContext, (GPoint){.x=x+2*11+1, .y=y+4}, (GPoint){.x=x+2*11+1, .y=y+9});
+        
+        for(z=1; z<=battery_level/10; z++){
+          graphics_draw_line(gContext, (GPoint){.x=x+2*z, .y=y+2}, (GPoint){.x=x+2*z, .y=y+10});
+        }
+        if(battery_level < BA_PERCENT_WARNING){
+          graphics_fill_rect(gContext, GRect(x+10, y+2, 4, 4), 0, GCornerNone);
+          graphics_fill_rect(gContext, GRect(x+11, y+6, 2, 2), 0, GCornerNone);
+          graphics_fill_rect(gContext, GRect(x+11, y+9, 2, 2), 0, GCornerNone);
+        }
+      }else{
+        graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={24,13}});
+        graphics_draw_line(gContext, (GPoint){.x=x+24, .y=y+4}, (GPoint){.x=x+24, .y=y+9});
+
+        snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_level);
+        graphics_draw_text(gContext, 
+                           battery_buffer, 
+                           fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_OPEN_SANS_REGULAR_10)),
+                           (GRect){.origin={117, 7}, .size={21, 14}}, 
+                           GTextOverflowModeFill,
+                           GTextAlignmentCenter,
+                           NULL
+                          ); 
+      }
+    }
+  }
+
+  // Print date
+  graphics_context_set_text_color(gContext, palette[color].text);
+  get_date_format(date);
+  int width = (date > 28) ? 120 : 136;
+  graphics_draw_text(gContext, 
+                     date_buffer,
+                     fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                     (GRect){.origin={0, width}, .size={144, 20}}, 
+                     GTextOverflowModeWordWrap,
+                     GTextAlignmentCenter,
+                     NULL
+                    );
+
 }
 
 static void window_load(Window *window){
@@ -487,16 +698,21 @@ static void window_load(Window *window){
 
   s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
   s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
-  
+    
   layer_set_update_proc(s_mainLayer, update_view);
   
   bluetooth_handler(bluetooth_connection_service_peek());
-  
+
+  battery_callback(battery_state_service_peek());
+
   Tuplet initial_values[] = {
-    TupletInteger(SHAPE_KEY,      (uint8_t) 0),
-    TupletInteger(COLOR_KEY,      (uint8_t) 0),
-    TupletInteger(NUMBER_KEY,     (uint8_t) 1),
-    TupletInteger(BLUETOOTH_KEY,  (uint8_t) 2),
+    TupletInteger(SHAPE_KEY,       (uint8_t) 0),
+    TupletInteger(COLOR_KEY,       (uint8_t) 0),
+    TupletInteger(NUMBER_KEY,      (uint8_t) 1),
+    TupletInteger(BLUETOOTH_KEY,   (uint8_t) 2),
+    TupletInteger(BATTERY_KEY,     (uint8_t) 2),
+    TupletInteger(BATTERY_MOD_KEY, (uint8_t) 0),
+    TupletInteger(DATE_KEY,        (uint8_t) 23),
   };
   APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "length values: %lu", (long unsigned int)ARRAY_LENGTH(initial_values));
 }
@@ -510,6 +726,8 @@ static void window_unload(){
 static void init(){
   APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
+  snprintf(bufferLocale, sizeof(bufferLocale), "%s", i18n_get_system_locale());
+  
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
@@ -529,7 +747,7 @@ static void init(){
 		color = persist_read_int(COLOR_KEY);
     color = color % COLOR_NUM;
   }else{
-    color = 0;
+    color = 7;
   }
   if(persist_exists(NUMBER_KEY)){
 		number = persist_read_int(NUMBER_KEY);
@@ -543,7 +761,23 @@ static void init(){
   }else{
     bluetooth = 2;
   }
-
+  if(persist_exists(BATTERY_KEY)){
+    battery = persist_read_int(BATTERY_KEY);
+    battery = battery % BATTERY_OPTIONS;
+  }else{
+    battery = 2;
+  }
+  if(persist_exists(BATTERY_MOD_KEY)){
+    battery_modality = persist_read_int(BATTERY_MOD_KEY);
+    battery_modality = battery_modality % 2;
+  }else{
+    battery_modality = 0;
+  }
+  if(persist_exists(DATE_KEY)){
+    date = persist_read_int(DATE_KEY);
+    date = date % DATE_OPTIONS;
+  }
+  
   // Create the colors palette
   #ifdef PBL_COLOR
   //                     background           text                 strokeDot            fillDot                  time background
@@ -556,8 +790,8 @@ static void init(){
     palette[6] = (Color){GColorInchworm,      GColorDarkGreen,     GColorDarkGreen,     GColorMayGreen,          GColorBrightGreen};
     palette[7] = (Color){GColorDarkGreen,     GColorScreaminGreen, GColorGreen,         GColorScreaminGreen,     GColorKellyGreen};
   #else
-    palette[0] = (Color){GColorWhite, GColorBlack, GColorBlack, GColorBlack, GColorBlack};
-    palette[1] = (Color){GColorBlack, GColorWhite, GColorWhite, GColorWhite, GColorWhite};
+    palette[0] = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorBlack,             GColorBlack};
+    palette[1] = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
   #endif
     
   // Create main window view
@@ -578,6 +812,9 @@ static void init(){
   
   // Subscribe to Bluetooth updates
   bluetooth_connection_service_subscribe(bluetooth_handler);
+  
+  // Register for battery level updates
+  battery_state_service_subscribe(battery_callback);
 }
 
 static void deinit(){
