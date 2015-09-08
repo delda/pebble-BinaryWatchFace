@@ -551,9 +551,17 @@ static void update_view(Layer *layer, GContext *gContext){
       }
       currentHeight = s_layerRect[j].origin.y + 24;
       
+      shape = 2;
       // Draws the dots
       if(s_bufferTime[j][i] == 1){
         switch(shape){
+          case 2:     // rectangle
+            graphics_context_set_fill_color(gContext, palette[color].fillDot);
+            graphics_context_set_stroke_color(gContext, palette[color].strokeDot);
+            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}}, 0, GCornerNone);
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}});
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight-6}, .size={10,17}});          
+            break;
           case 1:     // square
             graphics_context_set_fill_color(gContext, palette[color].fillDot);
             graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
@@ -570,6 +578,13 @@ static void update_view(Layer *layer, GContext *gContext){
         }
       }else{
         switch(shape){
+          case 2:    // rectangle
+            graphics_context_set_fill_color(gContext, palette[color].background);
+            graphics_context_set_stroke_color(gContext, palette[color].strokeDot);
+            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}}, 0, GCornerNone);
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}});
+            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight-6}, .size={10,17}});          
+            break;
           case 1:    // square
             graphics_context_set_fill_color(gContext, palette[color].strokeDot);
             graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
