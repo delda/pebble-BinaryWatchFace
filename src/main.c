@@ -551,54 +551,43 @@ static void update_view(Layer *layer, GContext *gContext){
       }
       currentHeight = s_layerRect[j].origin.y + 24;
       
-      shape = 2;
+      //shape = 3;
       // Draws the dots
+      GColor strokeColor, fillColor;
+      strokeColor = palette[color].strokeDot;
       if(s_bufferTime[j][i] == 1){
-        switch(shape){
-          case 2:     // rectangle
-            graphics_context_set_fill_color(gContext, palette[color].fillDot);
-            graphics_context_set_stroke_color(gContext, palette[color].strokeDot);
-            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}}, 0, GCornerNone);
-            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}});
-            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight-6}, .size={10,17}});          
-            break;
-          case 1:     // square
-            graphics_context_set_fill_color(gContext, palette[color].fillDot);
-            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
-            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}});
-            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-7, currentHeight-5}, .size={14,14}});
-            break;
-          case 0:
-          default:    // disk
-            graphics_context_set_fill_color(gContext, palette[color].strokeDot);
-            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
-            graphics_context_set_fill_color(gContext, palette[color].fillDot);
-            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 6);
-            break;
-        }
+        fillColor = palette[color].fillDot;
       }else{
-        switch(shape){
-          case 2:    // rectangle
-            graphics_context_set_fill_color(gContext, palette[color].background);
-            graphics_context_set_stroke_color(gContext, palette[color].strokeDot);
-            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}}, 0, GCornerNone);
-            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}});
-            graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight-6}, .size={10,17}});          
-            break;
-          case 1:    // square
-            graphics_context_set_fill_color(gContext, palette[color].strokeDot);
-            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
-            graphics_context_set_fill_color(gContext, palette[color].background);
-            graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-4}, .size={12,12}}, 0, GCornerNone);
-            break;
+        fillColor = palette[color].background;
+      }
+      switch(shape){
+        case 3:     // rhombus
+          graphics_context_set_fill_color(gContext, fillColor);
+          graphics_context_set_stroke_color(gContext, strokeColor);
+          gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-8}, {currentWidth+10, currentHeight+2}, {currentWidth, currentHeight+12}, {currentWidth-10, currentHeight+2}}}));
+          gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-7}, {currentWidth+9, currentHeight+2}, {currentWidth, currentHeight+11}, {currentWidth-9, currentHeight+2}}}));
+          gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-6}, {currentWidth+8, currentHeight+2}, {currentWidth, currentHeight+10}, {currentWidth-8, currentHeight+2}}}));
+          break;
+        case 2:     // rectangle
+          graphics_context_set_fill_color(gContext, fillColor);
+          graphics_context_set_stroke_color(gContext, strokeColor);
+          graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}}, 0, GCornerNone);
+          graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}});
+          graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight-6}, .size={10,17}});          
+          break;
+        case 1:     // square
+          graphics_context_set_fill_color(gContext, strokeColor);
+          graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
+          graphics_context_set_fill_color(gContext, fillColor);
+          graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-4}, .size={12,12}}, 0, GCornerNone);
+          break;
           case 0:
-          default:    // disc
-            graphics_context_set_fill_color(gContext, palette[color].strokeDot);
-            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
-            graphics_context_set_fill_color(gContext, palette[color].background);
-            graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 6);
-            break;
-        }
+        default:    // disk
+          graphics_context_set_fill_color(gContext, strokeColor);
+          graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+          graphics_context_set_fill_color(gContext, fillColor);
+          graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 6);
+          break;
       }
       
       // Prints texts
