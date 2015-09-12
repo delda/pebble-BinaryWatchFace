@@ -551,7 +551,6 @@ static void update_view(Layer *layer, GContext *gContext){
       }
       currentHeight = s_layerRect[j].origin.y + 24;
       
-      //shape = 3;
       // Draws the dots
       GColor strokeColor, fillColor;
       strokeColor = palette[color].strokeDot;
@@ -561,12 +560,19 @@ static void update_view(Layer *layer, GContext *gContext){
         fillColor = palette[color].background;
       }
       switch(shape){
+        // case 5 cross: [0,5; 5,5; 5,0; 10,0; 10,5; 15,5; 15,10; 10,10; 10,15; 5,15; 5,10; 0,10; 0,5]
+        case 4:     // triangle
+          graphics_context_set_fill_color(gContext, strokeColor); 
+          gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-6}, {currentWidth+9, currentHeight+13}, {currentWidth-8, currentHeight+13}}}));
+          graphics_context_set_fill_color(gContext, fillColor);
+          gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-2}, {currentWidth+6, currentHeight+11}, {currentWidth-5, currentHeight+11}}}));
+          break;
         case 3:     // rhombus
           graphics_context_set_fill_color(gContext, fillColor);
           graphics_context_set_stroke_color(gContext, strokeColor);
-          gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-8}, {currentWidth+10, currentHeight+2}, {currentWidth, currentHeight+12}, {currentWidth-10, currentHeight+2}}}));
-          gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-7}, {currentWidth+9, currentHeight+2}, {currentWidth, currentHeight+11}, {currentWidth-9, currentHeight+2}}}));
-          gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-6}, {currentWidth+8, currentHeight+2}, {currentWidth, currentHeight+10}, {currentWidth-8, currentHeight+2}}}));
+          gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-16}, {currentWidth+10, currentHeight-6}, {currentWidth, currentHeight+4}, {currentWidth-10, currentHeight-6}}}));
+          gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-15}, {currentWidth+9, currentHeight-6}, {currentWidth, currentHeight+3}, {currentWidth-9, currentHeight-6}}}));
+          gpath_draw_outline(gContext, gpath_create(&(GPathInfo){.num_points=4, .points=(GPoint []){{currentWidth, currentHeight-14}, {currentWidth+8, currentHeight-6}, {currentWidth, currentHeight+2}, {currentWidth-8, currentHeight-6}}}));
           break;
         case 2:     // rectangle
           graphics_context_set_fill_color(gContext, fillColor);
@@ -751,7 +757,7 @@ static void init(){
 		color = persist_read_int(COLOR_KEY);
     color = color % COLOR_NUM;
   }else{
-    color = 7;
+    color = 0;
   }
   if(persist_exists(NUMBER_KEY)){
 		number = persist_read_int(NUMBER_KEY);
@@ -780,6 +786,8 @@ static void init(){
   if(persist_exists(DATE_KEY)){
     date = persist_read_int(DATE_KEY);
     date = date % DATE_OPTIONS;
+  }else{
+    date = 23;
   }
   
   // Create the colors palette
