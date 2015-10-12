@@ -43,17 +43,6 @@ char *translate_error(AppMessageResult result) {
   }
 }
 
-char *debug_dictionary_result( DictionaryResult result ) {
-	switch( result ) {
-		case DICT_OK: return "DICT_OK";
-		case DICT_NOT_ENOUGH_STORAGE: return "DICT_NOT_ENOUGH_STORAGE";
-		case DICT_INVALID_ARGS: return "DICT_INVALID_ARGS";	
-		case DICT_INTERNAL_INCONSISTENCY: return "DICT_INTERNAL_INCONSISTENCY";
-		case DICT_MALLOC_FAILED: return"DICT_MALLOC_FAILED";
-    default: return "UNKNOW ERROR";
-	}
-}
-
 static void battery_callback(BatteryChargeState state) {
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
@@ -124,6 +113,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_write_int(DATE_KEY, date);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "date: %d", date);
         break;
+      case HELP_NUM_KEY:
+        help_num = t->value->uint8;
+        help_num = help_num % 2;
+        persist_write_int(HELP_NUM_KEY, help_num);
+        if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "help numbers: %d", help_num);
+        break;
     }
     // Get next pair, if any
     t = dict_read_next(iterator);
@@ -184,7 +179,7 @@ static void update_view(Layer *layer, GContext *gContext){
   }
   
   // Dots and help numbers
-  draw_clock(gContext, palette[color]);
+  draw_clock(gContext, palette[color], (bool)help_num);
   
   // Bluetooth
   draw_bluetooth(gContext);
@@ -208,26 +203,12 @@ static void window_load(Window *window){
   s_bulletsNumber[0] = clock_is_24h_style() ? 5 : 4;
   s_bulletsNumber[1] = 6;
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "bullets: %d - %d", s_bulletsNumber[0], s_bulletsNumber[1]);
-
-  s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
-  s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
     
   layer_set_update_proc(s_mainLayer, update_view);
   
   bluetooth_handler(bluetooth_connection_service_peek());
 
   battery_callback(battery_state_service_peek());
-
-  Tuplet initial_values[] = {
-    TupletInteger(SHAPE_KEY,       (uint8_t) 0),
-    TupletInteger(COLOR_KEY,       (uint8_t) 0),
-    TupletInteger(NUMBER_KEY,      (uint8_t) 1),
-    TupletInteger(BLUETOOTH_KEY,   (uint8_t) 2),
-    TupletInteger(BATTERY_KEY,     (uint8_t) 2),
-    TupletInteger(BATTERY_MOD_KEY, (uint8_t) 0),
-    TupletInteger(DATE_KEY,        (uint8_t) 23),
-  };
-  if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, "length values: %lu", (long unsigned int)ARRAY_LENGTH(initial_values));
 }
 
 static void window_unload(){
@@ -291,6 +272,12 @@ static void init(){
     date = date % DATE_OPTIONS;
   }else{
     date = 23;
+  }
+  if(persist_exists(HELP_NUM_KEY)){
+    help_num = persist_read_int(HELP_NUM_KEY);
+    help_num = help_num % 2;
+  }else{
+    help_num = 1;
   }
   
   // Create the colors palette

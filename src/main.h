@@ -32,6 +32,7 @@ enum appParameters {
   BATTERY_KEY     = 0x4,
   BATTERY_MOD_KEY = 0x5,
   DATE_KEY        = 0x6,
+  HELP_NUM_KEY    = 0x7,
 };
 
 static int SHAPE_NUM = 11;

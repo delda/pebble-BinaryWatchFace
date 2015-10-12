@@ -7,7 +7,6 @@ unsigned int hour, minute;
 static char *s_textBase[]={"1","2","4","8","16","32"};
 
 // Variabili per definire i layer dell'orologio
-GRect s_layerRect[2];
 int s_bulletsNumber[2];
 int s_bufferTime[2][6];
 
@@ -20,6 +19,7 @@ int bluetooth_status;
 int battery;
 int dotIndex;
 int date;
+int help_num;
 
 // Bluetooth
 static int BT_NEVER         = 0;

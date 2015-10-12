@@ -355,11 +355,18 @@ void draw_time_background(GContext *gContext, Color palette){
   #endif
 }
 
-void draw_clock(GContext *gContext, Color palette){
+void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   int currentWidth, currentHeight;
   int widthSingleLayer;
+
+  s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
+  if(drawNumbers == true){
+    s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};  
+  }else{
+    s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}}; 
+  }
 
   graphics_context_set_stroke_color(gContext, palette.strokeDot);
   for(int j=0; j<2; j++){
@@ -406,14 +413,17 @@ void draw_clock(GContext *gContext, Color palette){
         currentHeight += 10;
       #endif
       graphics_context_set_text_color(gContext, palette.text);
-      graphics_draw_text(gContext, 
-                         s_textBase[i], 
-                         fonts_get_system_font(FONT_KEY_GOTHIC_14),
-                         (GRect){.origin={currentWidth-8, currentHeight}, .size={16, 18}}, 
-                         GTextOverflowModeWordWrap,
-                         GTextAlignmentCenter,
-                         NULL
-                        );
+ 
+      if(drawNumbers == true){
+        graphics_draw_text(gContext, 
+                           s_textBase[i], 
+                           fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                           (GRect){.origin={currentWidth-8, currentHeight}, .size={16, 18}}, 
+                           GTextOverflowModeWordWrap,
+                           GTextAlignmentCenter,
+                           NULL
+                          );        
+      }
     }
   }
 }
