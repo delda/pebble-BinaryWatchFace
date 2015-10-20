@@ -1,64 +1,96 @@
-var options = {shape: 0, color: 0, number: 1, bluetooth: 2, battery: 2, battery_modality: 0, date: 23, help_num: 1};
-var version = '3.1';
+var version = '3.0';
 var DEBUG = true;
 
-options.platform = getPlatform();
-options.locale = getLocale();
+var options = {shape: 1, color: 2, number: 0, bluetooth: 2, battery: 2, battery_modality: 0, date: 23, help_num: 1};
+var webOptions = {version: version, platform: getPlatform(), locale: getLocale()};
+
+//options.platform = getPlatform();
+//options.locale = getLocale();
 
 var AppOptions = {
-  version: version,
-  platform: 0,
-  locale: 'en_EN',
-  extend: function(extentions){
-    if(DEBUG) console.log('AppOptions.extend()');
-    for(prop in extentions){
-      if(DEBUG) console.log('extend: ' + prop + '=' + extentions[prop]);
-      this[prop] = extentions[prop];
-    }
-    return this;
-  },
-  overwriteLocalStorage: function(){
-    if(DEBUG) console.log('AppOptions.overwriteLocalStorage()');
-    for(prop in this){
-      if(localStorage.key(prop)){
-        if(DEBUG) console.log('override: ' + prop + '=' + this[prop]);
-        this[prop] = localStorage.getItem(prop);
+  foreach: function(f, obj){
+    for(var prop in obj){
+      if(typeof obj[prop] !== 'function'){
+        f(prop, obj[prop]);
       }
     }
-    return this;
+  },
+  clean: function(){
+    if(DEBUG) console.log('AppOptions.clean()');
+    var that = this;
+    this.foreach(
+      function(key, value){
+        delete that[key];
+      },
+      that
+    );
+    return that;
+  },
+  extend: function(extentions){
+    if(DEBUG) console.log('AppOptions.extend()');
+    var that = this;
+    this.foreach(
+      function(key, value){ that[key] = value; },
+      extentions
+    );
+    return that;
+  },
+  overrideLocalStorage: function(){
+    if(DEBUG) console.log('AppOptions.overrideLocalStorage()');
+    var that = this;
+    this.foreach(
+      function(key, value){
+        var tmp = localStorage.getItem(key);
+        if(typeof(tmp) != 'undefined' && typeof(tmp) != 'object' && tmp !== ''){
+          that[key] = (!isNaN(parseFloat(tmp)) && isFinite(tmp)) ? Number(tmp) : tmp;
+        }
+      },
+      that
+    );
+    return that;
   },
   getObjOptions: function(){
     if(DEBUG) console.log('AppOptions.getObjOptions()');
     var obj = {};
     var i = 0;
-    for(prop in this){
-      if(DEBUG) console.log('getObjOptions: ' + typeof this[prop]);
-      if(typeof this[prop] !== 'function'){
-        if(DEBUG) console.log('getObjOptions: ' + this[prop]);
-        obj[i] = this[prop];
+    var that = this;
+    this.foreach(
+      function(key, value){
+        obj[i] = that[key];
         i++;
-      }
-    }
+      },
+      that
+    );
     return obj;
-  },
-  getUrlOptions: function(){
-    if(DEBUG) console.log('AppOptions.url()');
-    var url = '';
-    var i = 0;
-    for(prop in this){
-      url += (i == 0) ? '&' : '?';
-      url += prop+'='+this[prop];
-    }
-    return url;
   },
   prepareConfiguration: function(serialized_settings){
     if(DEBUG) console.log('AppOptions.prepareConfiguration()');
-    var obj = {};
+    var that = this;
+    console.log(serialized_settings);
     var settings = JSON.parse(serialized_settings);
-    for(prop in settings){
-      obj[prop] = Number(settings[prop]);
-    }
-    return obj;
+    this.foreach(
+      function(key, value){
+        if(that.hasOwnProperty(key)){
+          that[key] = (!isNaN(parseFloat(value)) && isFinite(value)) ? Number(value) : value; 
+        }
+      },
+      settings
+    );
+    return that;
+  },
+  getUrlOptions: function(){
+    if(DEBUG) console.log('AppOptions.getUrlOptions()');
+    var url = '';
+    var i = 0;
+    this.foreach(
+      function(key, value){
+        url += (i === 0) ? '?' : '&';
+        url += key+'='+value;
+        i++;
+      },
+      this
+    );
+    return url;
   },
   sendConfiguration: function(dataMessage){
     Pebble.sendAppMessage(
@@ -72,9 +104,16 @@ var AppOptions = {
     );
   },
   setLocalStorage: function(settings){
+    if(DEBUG) console.log('AppOptions.setLocalStorage()');
     var obj = JSON.parse(decodeURIComponent(settings));
-    for(prop in obj){
-      localStorage.setItem(prop, obj[prop]);
+    this.foreach(
+      function(key, value){ localStorage.setItem(key, obj[key]); },
+      obj
+    );
+    for(var prop in obj){
+      if(typeof this[prop] !== 'function'){
+        localStorage.setItem(prop, obj[prop]);
+      }
     }
   },
 };
@@ -115,7 +154,7 @@ function getLocale(){
 function readyCallback(e){
   if(DEBUG) console.log('readyCallback()');
   
-  var dataMessage = AppOptions.extend(options).overwriteLocalStorage().getObjOptions();
+  var dataMessage = AppOptions.extend(options).overrideLocalStorage().getObjOptions();
   transmitConfiguration(dataMessage);
 }
 // The watch sent an AppMessage to PebbleKit JS
@@ -126,16 +165,28 @@ function appMessageCallback(e){
 function showConfigurationCallback(e){
   if(DEBUG) console.log('showConfigurationCallback()');
 
-  var urlString = AppOptions.extend(options).overwriteLocalStorage().getUrlOptions();
+  var urlString = AppOptions.extend(options).extend(webOptions).overrideLocalStorage().getUrlOptions();
   var url = 'http://delda.github.io/pebble_binaryWatch/index.html'+urlString;
   if(DEBUG) console.log("url: " + url);
   Pebble.openURL(url);
 }
 // The user closes the configuration webview
 function webViewClosedCallback(e){
+  if(DEBUG) console.log('webViewClosedCallback()');
+  
   var resp = e.response;
   if(DEBUG) console.log('Configuration window returned: ' + resp);
-  var message = AppOptions.prepareConfiguration(resp);
+  //var message = AppOptions.extend(options).prepareConfiguration(resp).getObjOptions();
+  var message = AppOptions;
+  console.log(JSON.stringify(message));
+  message = message.clean();
+  console.log(JSON.stringify(message));
+  message = message.extend(options);
+  console.log(JSON.stringify(message));
+  message = message.prepareConfiguration(resp);
+  console.log(JSON.stringify(message));
+  message = message.getObjOptions();
+  console.log(JSON.stringify(message));
   transmitConfiguration(message);
   AppOptions.setLocalStorage(resp);
 }
@@ -143,7 +194,7 @@ function webViewClosedCallback(e){
 // Sends the message to the watch
 function transmitConfiguration(dictionary){
   if(DEBUG) console.log('transmitConfiguration()');
-  if(DEBUG) console.log(JSON.stringify(dictionary));
+  if(DEBUG) console.log('dictionary: '+JSON.stringify(dictionary));
   Pebble.sendAppMessage(
     dictionary, 
     function(e) {

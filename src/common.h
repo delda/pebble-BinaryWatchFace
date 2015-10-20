@@ -15,13 +15,13 @@ int shape;
 int color;
 int number;
 int bluetooth;
-int bluetooth_status;
 int battery;
 int dotIndex;
 int date;
 int help_num;
 
 // Bluetooth
+int bluetooth_status;
 static int BT_NEVER         = 0;
 static int BT_ON_DISCONNECT = 1;
 static int BT_ALWAYS        = 2;

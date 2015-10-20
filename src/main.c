@@ -229,7 +229,7 @@ static void init(){
   app_message_register_outbox_sent(outbox_sent_callback);
 
   // Open AppMessage to transfers
-  app_message_open(64, 64);
+  app_message_open(72, 72);
   
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);

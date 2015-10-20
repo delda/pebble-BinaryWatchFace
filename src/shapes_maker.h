@@ -3,7 +3,9 @@
 #include <pebble.h>
 #include "common.h"
 
-GRect s_layerRect[2];
+static GRect s_layerRect[2];
+static GBitmap *bt_bitmap_off = NULL;
+static GBitmap *bt_bitmap_on = NULL;
 
 GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius);
 void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor);

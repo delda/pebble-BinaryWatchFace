@@ -431,15 +431,19 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
 void draw_bluetooth(GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  static GBitmap *bt_bitmap = NULL;
-  if(bluetooth != BT_NEVER){
-    if(bluetooth_status == 0){
-      bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
-    }else if(bluetooth == BT_ALWAYS){
-      bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
-    }
+  int bt = 0;
+  
+  if(bt_bitmap_off == NULL){
+    bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
   }
-  if(bt_bitmap){
+  if(bt_bitmap_on == NULL){
+    bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
+  }
+
+  if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0))
+    bt = 1;
+  
+  if(bt){
     #ifdef PBL_PLATFORM_CHALK
       GRect rect = GRect(42, 19, 10, 16);
     #else
@@ -450,7 +454,11 @@ void draw_bluetooth(GContext *gContext){
     #else
       graphics_context_set_compositing_mode(gContext, GCompOpSet);
     #endif
-    graphics_draw_bitmap_in_rect(gContext, bt_bitmap, rect);
+    if(bluetooth_status == 0){
+      graphics_draw_bitmap_in_rect(gContext, bt_bitmap_off, rect);
+    }else if(bluetooth == BT_ALWAYS){
+      graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
+    }
   }
 }
 
