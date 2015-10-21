@@ -1,11 +1,8 @@
 var version = '3.0';
-var DEBUG = true;
+var DEBUG = false;
 
 var options = {shape: 1, color: 2, number: 0, bluetooth: 2, battery: 2, battery_modality: 0, date: 23, help_num: 1};
 var webOptions = {version: version, platform: getPlatform(), locale: getLocale()};
-
-//options.platform = getPlatform();
-//options.locale = getLocale();
 
 var AppOptions = {
   foreach: function(f, obj){
@@ -176,17 +173,8 @@ function webViewClosedCallback(e){
   
   var resp = e.response;
   if(DEBUG) console.log('Configuration window returned: ' + resp);
-  //var message = AppOptions.extend(options).prepareConfiguration(resp).getObjOptions();
-  var message = AppOptions;
-  console.log(JSON.stringify(message));
-  message = message.clean();
-  console.log(JSON.stringify(message));
-  message = message.extend(options);
-  console.log(JSON.stringify(message));
-  message = message.prepareConfiguration(resp);
-  console.log(JSON.stringify(message));
-  message = message.getObjOptions();
-  console.log(JSON.stringify(message));
+  
+  var message = AppOptions.clean().extend(options).prepareConfiguration(resp).getObjOptions();
   transmitConfiguration(message);
   AppOptions.setLocalStorage(resp);
 }
@@ -195,7 +183,7 @@ function webViewClosedCallback(e){
 function transmitConfiguration(dictionary){
   if(DEBUG) console.log('transmitConfiguration()');
   if(DEBUG) console.log('dictionary: '+JSON.stringify(dictionary));
-  Pebble.sendAppMessage(
+  return Pebble.sendAppMessage(
     dictionary, 
     function(e) {
       if(DEBUG) console.log('Send successful: ' + JSON.stringify(e));
