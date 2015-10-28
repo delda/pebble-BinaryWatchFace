@@ -19,7 +19,7 @@ void dec2binTime(int hour, int minute){
       }else{
         s_bufferTime[i][j] = 0;
       }
-    }    
+    }
   }
 }
 
@@ -196,7 +196,7 @@ static void window_load(Window *window){
   
   Layer *window_layer = window_get_root_layer(window);
   GRect windowBounds = layer_get_bounds(window_layer);
-
+  
   s_mainLayer = layer_create((GRect){.origin={0, 0}, .size={windowBounds.size.w, windowBounds.size.h}});
   layer_add_child(window_layer, s_mainLayer);
   

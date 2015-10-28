@@ -2,7 +2,7 @@
 #include <math.h>
 #include "shapes_maker.h"
 #include "common.h"
-  
+
 #include "settings.c"
 
 GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius){
@@ -326,10 +326,19 @@ void draw_number(int number, GPoint position, GContext *gContext){
 void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask corner_mask, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
+  #ifdef PBL_RECT
+    GRect rect = GRect(0, 0, 168, 144);
+  #elif PBL_ROUND
+    GRect rect = GRect(0, 0, 180, 180);
+  #endif
   graphics_context_set_fill_color(gContext, palette.background);
-  GRect rect;
-  rect = GRect(0, 0, 144, 168);
   graphics_fill_rect(gContext, rect, corner_radius, corner_mask);
+  #ifdef PBL_ROUND
+    GRect base = GRect(0, 165, 180, 20);
+    graphics_context_set_fill_color(gContext, palette.fillDot);
+    graphics_fill_rect(gContext, base, 0, GCornerNone);
+  #endif
+
 }
 
 void draw_time_background(GContext *gContext, Color palette){
@@ -353,6 +362,11 @@ void draw_time_background(GContext *gContext, Color palette){
     fill_number((minute-(minute%10))/10, (GPoint){30, 84}, gContext);
     fill_number(minute%10, (GPoint){92, 84}, gContext);      
   #endif
+  #ifdef PBL_ROUND
+    GRect base = GRect(0, 165, 180, 20);
+    graphics_context_set_fill_color(gContext, palette.fillDot);
+    graphics_fill_rect(gContext, base, 0, GCornerNone);
+  #endif
 }
 
 void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
@@ -361,12 +375,17 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   int currentWidth, currentHeight;
   int widthSingleLayer;
 
-  s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
-  if(drawNumbers == true){
-    s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};  
-  }else{
-    s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}}; 
-  }
+  #ifdef PBL_PLATFORM_CHALK
+    s_layerRect[0] = (GRect){.origin={20, 40}, .size={104, 24}};
+    s_layerRect[1] = (GRect){.origin={20, 65}, .size={104, 24}};
+  #else
+    s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
+    if(drawNumbers == true){
+      s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
+    }else{
+      s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}};
+    }
+  #endif
 
   graphics_context_set_stroke_color(gContext, palette.strokeDot);
   for(int j=0; j<2; j++){
@@ -394,8 +413,7 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
         currentWidth += 20;
         currentHeight += 10;
       #endif
-
-      
+    
       // Draws the dots
       GColor strokeColor, fillColor;
       strokeColor = palette.strokeDot;
@@ -408,12 +426,14 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   
       // Prints texts
       currentHeight = s_layerRect[j].origin.y;
-      // Chalk platform correction
       #ifdef PBL_PLATFORM_CHALK
-        currentHeight += 10;
+        currentHeight += 7;
+        if(j == 1){
+          currentHeight += 36;
+        }
       #endif
+      
       graphics_context_set_text_color(gContext, palette.text);
- 
       if(drawNumbers == true){
         graphics_draw_text(gContext, 
                            s_textBase[i], 
@@ -431,8 +451,6 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
 void draw_bluetooth(GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  int bt = 0;
-  
   if(bt_bitmap_off == NULL){
     bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
   }
@@ -440,15 +458,21 @@ void draw_bluetooth(GContext *gContext){
     bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
   }
 
-  if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0))
-    bt = 1;
-  
-  if(bt){
+  if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
+    int x, y;
+    int w = 10;
+    int h = 16;
     #ifdef PBL_PLATFORM_CHALK
-      GRect rect = GRect(42, 19, 10, 16);
+      x = 85;
+      y = 140;
+      if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
+        x -= 20;
+      }
     #else
-      GRect rect = GRect(5, 5, 10, 16);
+      x = 5;
+      y = 5;
     #endif
+    GRect rect = GRect(x, y, w, h);
     #ifdef PBL_PLATFORM_APLITE
       graphics_context_set_compositing_mode(gContext, GCompOpAssign);
     #else
@@ -467,10 +491,10 @@ void draw_battery(GContext *gContext, int battery, Color palette){
   
   if(battery != BA_NEVER){
     #ifdef PBL_PLATFORM_APLITE
-      graphics_context_set_stroke_color(gContext, palette.text);
       graphics_context_set_fill_color(gContext, palette.text);
+      graphics_context_set_stroke_color(gContext, palette.text);
       graphics_context_set_text_color(gContext, palette.text);        
-    #elif PBL_PLATFORM_BASALT
+    #else
       if(battery_level < BA_PERCENT_WARNING){
         graphics_context_set_fill_color(gContext, GColorRed);
         graphics_context_set_stroke_color(gContext, GColorRed);
@@ -486,13 +510,19 @@ void draw_battery(GContext *gContext, int battery, Color palette){
   if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
     int x, y;
     #ifdef PBL_PLATFORM_CHALK
-      x = 115;
-      y = 20;      
+      x = 80;
+      y = 140;      
     #else
       x = 115;
       y = 7;
     #endif
     int z;
+    // if i display bluetooth image too, battery sign must shift right
+    #ifdef PBL_PLATFORM_CHALK
+      if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
+        x += 20;
+      }
+    #endif
     if(battery_modality == 0){
       graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={23,13}});
       graphics_draw_line(gContext, (GPoint){.x=x+2*11+1, .y=y+4}, (GPoint){.x=x+2*11+1, .y=y+9});
@@ -506,14 +536,20 @@ void draw_battery(GContext *gContext, int battery, Color palette){
         graphics_fill_rect(gContext, GRect(x+11, y+9, 2, 2), 0, GCornerNone);
       }
     }else{
-      graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={24,13}});
-      graphics_draw_line(gContext, (GPoint){.x=x+24, .y=y+4}, (GPoint){.x=x+24, .y=y+9});
-
+      #ifndef PBL_PLATFORM_CHALK
+        GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+        graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={24,13}});
+        graphics_draw_line(gContext, (GPoint){.x=x+24, .y=y+4}, (GPoint){.x=x+24, .y=y+9});
+        x -= 2;
+        y -= 3;
+      #else
+        GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);    
+      #endif
       snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_level);
       graphics_draw_text(gContext, 
                          battery_buffer, 
-                         fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_OPEN_SANS_REGULAR_10)),
-                         (GRect){.origin={117, 7}, .size={21, 14}}, 
+                         font,
+                         (GRect){.origin={x, y}, .size={30, 10}}, 
                          GTextOverflowModeFill,
                          GTextAlignmentCenter,
                          NULL
@@ -527,12 +563,20 @@ void draw_date(GContext *gContext, Color palette){
   
   graphics_context_set_text_color(gContext, palette.text);
   get_date_format(date);
-  int width = (date > 28) ? 120 : 136;
+  int x;
+  int y;
+  int w;
+  int h = (date > 28) ? 120 : 136;
   #ifdef PBL_PLATFORM_CHALK
-    GRect rect = GRect(40, width, 104, 20);
+    x = 30;
+    y = (date > 28) ? 5 : 20;
+    w = 120;
   #else
-    GRect rect = GRect(0, width, 144, 20);
+    x = 0;
+    y = (date > 28) ? 120 : 136;
+    w = 144;
   #endif
+  GRect rect = GRect(x, y, w, h);
   graphics_draw_text(gContext, 
                      date_buffer,
                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),

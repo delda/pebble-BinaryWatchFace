@@ -14,6 +14,11 @@
                 "type": "font"
             },
             {
+                "file": "fonts/OpenSans-Regular.ttf",
+                "name": "FONT_OPEN_SANS_REGULAR_14",
+                "type": "font"
+            },
+            {
                 "file": "images/Bluetooth_off_10x16.png",
                 "name": "BLUETOOTH_OFF_IMG",
                 "type": "png"
@@ -39,7 +44,7 @@
         "chalk"
     ],
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
-    "versionLabel": "3.0",
+    "versionLabel": "3.1",
     "watchapp": {
         "watchface": true
     }
