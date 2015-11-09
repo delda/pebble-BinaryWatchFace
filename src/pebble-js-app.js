@@ -1,7 +1,7 @@
-var version = '3.1';
+var version = '3.3';
 var DEBUG = false;
 
-var options = {shape: 0, color: 0, number: 1, bluetooth: 2, battery: 2, battery_modality: 0, date: 32, help_num: 1};
+var options = {shape: 1, color: 1, number: 1, bluetooth: 2, battery: 2, battery_modality: 0, date: 23, help_num: 1};
 var webOptions = {version: version, platform: getPlatform(), locale: getLocale()};
 
 var AppOptions = {

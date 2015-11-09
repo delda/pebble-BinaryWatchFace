@@ -117,7 +117,7 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
 
 void fill_number(int number, GPoint position, GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   switch(number){
     case 0:
       graphics_fill_rect(gContext, GRect(position.x +  0, position.y +  0, 60, 14), 0, GCornerNone);
@@ -326,10 +326,10 @@ void draw_number(int number, GPoint position, GContext *gContext){
 void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask corner_mask, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  #ifdef PBL_RECT
-    GRect rect = GRect(0, 0, 168, 144);
-  #elif PBL_ROUND
+  #ifdef PBL_ROUND
     GRect rect = GRect(0, 0, 180, 180);
+  #else
+    GRect rect = GRect(0, 0, 144, 168);
   #endif
   graphics_context_set_fill_color(gContext, palette.background);
   graphics_fill_rect(gContext, rect, corner_radius, corner_mask);
@@ -343,20 +343,20 @@ void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask cor
 
 void draw_time_background(GContext *gContext, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
+  graphics_context_set_fill_color(gContext, palette.time);
+  graphics_context_set_stroke_color(gContext, palette.time);
   #ifdef PBL_PLATFORM_APLITE
     draw_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
     draw_number(hour%10, (GPoint){72, -6}, gContext);
     draw_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
     draw_number(minute%10, (GPoint){72, 84}, gContext);      
   #elif PBL_PLATFORM_BASALT
-    graphics_context_set_fill_color(gContext, palette.time);
     fill_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
     fill_number(hour%10, (GPoint){72, -6}, gContext);
     fill_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
     fill_number(minute%10, (GPoint){72, 84}, gContext);
   #elif PBL_PLATFORM_CHALK
-    graphics_context_set_fill_color(gContext, palette.time);
     fill_number((hour-(hour%10))/10, (GPoint){30, -6}, gContext);
     fill_number(hour%10, (GPoint){92, -6}, gContext);
     fill_number((minute-(minute%10))/10, (GPoint){30, 84}, gContext);
@@ -451,38 +451,61 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
 void draw_bluetooth(GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  if(bt_bitmap_off == NULL){
-    bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
-  }
-  if(bt_bitmap_on == NULL){
-    bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
-  }
+  #if PBL_PLATFORM_APLITE
+    if(bt_bitmap_off == NULL)
+      bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_OFF_IMG);
+    if(bt_bitmap_on == NULL)
+      bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_ON_IMG);
+  #else
+    if(bt_bitmap_off == NULL)
+      bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
+    if(bt_bitmap_on == NULL)
+      bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
+  #endif
 
   if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
-    int x, y;
+    int x = 7;
+    int y = 7;
     int w = 10;
     int h = 16;
-    #ifdef PBL_PLATFORM_CHALK
+    #ifdef PBL_PLATFORM_APLITE
+      if(bluetooth_status == 1){
+        w = 6;
+        h = 14;
+      }else{
+        w = 12;
+        h = 13;
+      }
+    #elif PBL_PLATFORM_BASALT
+      y = 6;
+    #elif PBL_PLATFORM_CHALK
       x = 85;
       y = 140;
       if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
         x -= 20;
       }
-    #else
-      x = 5;
-      y = 5;
     #endif
     GRect rect = GRect(x, y, w, h);
     #ifdef PBL_PLATFORM_APLITE
-      graphics_context_set_compositing_mode(gContext, GCompOpAssign);
+      graphics_context_set_compositing_mode(gContext, GCompOpOr);
     #else
       graphics_context_set_compositing_mode(gContext, GCompOpSet);
     #endif
     if(bluetooth_status == 0){
       graphics_draw_bitmap_in_rect(gContext, bt_bitmap_off, rect);
-    }else if(bluetooth == BT_ALWAYS){
+    }else{
       graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
     }
+    #ifdef PBL_PLATFORM_APLITE
+      if(color == 0){
+        graphics_context_set_compositing_mode(gContext, GCompOpClear);
+        if(bluetooth_status == 0){
+          graphics_draw_bitmap_in_rect(gContext, bt_bitmap_off, rect);
+        }else{
+          graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
+        }        
+      }
+    #endif
   }
 }
 
@@ -511,7 +534,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     int x, y;
     #ifdef PBL_PLATFORM_CHALK
       x = 80;
-      y = 140;      
+      y = 142;      
     #else
       x = 115;
       y = 7;
@@ -568,9 +591,9 @@ void draw_date(GContext *gContext, Color palette){
   int w;
   int h = (date > 28) ? 120 : 136;
   #ifdef PBL_PLATFORM_CHALK
-    x = 30;
+    x = 24;
     y = (date > 28) ? 5 : 20;
-    w = 120;
+    w = 132;
   #else
     x = 0;
     y = (date > 28) ? 120 : 136;

@@ -156,7 +156,6 @@ static void update_time(){
     hour = (cTime->tm_hour == 12) ? 12 : (cTime->tm_hour % 12);
   }
   minute = cTime->tm_min;
-  
   dec2binTime(hour, minute);
 }
 
@@ -177,10 +176,15 @@ static void update_view(Layer *layer, GContext *gContext){
   if(number > 0){
     draw_time_background(gContext, palette[color]);
   }
-  
+
   // Dots and help numbers
   draw_clock(gContext, palette[color], (bool)help_num);
   
+  // Time in background
+  if(number > 0){
+    draw_time_background(gContext, palette[color]);
+  }
+
   // Bluetooth
   draw_bluetooth(gContext);
   
