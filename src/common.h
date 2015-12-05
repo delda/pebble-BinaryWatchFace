@@ -19,6 +19,7 @@ int battery;
 int dotIndex;
 int date;
 int help_num;
+int snow;
 
 // Bluetooth
 int bluetooth_status;

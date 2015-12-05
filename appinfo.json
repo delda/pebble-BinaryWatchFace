@@ -1,6 +1,7 @@
 {
     "appKeys": {},
     "capabilities": [
+        "location",
         "configurable"
     ],
     "companyName": "delda@virgilio.it",
@@ -68,7 +69,7 @@
         "chalk"
     ],
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
-    "versionLabel": "3.3",
+    "versionLabel": "3.5",
     "watchapp": {
         "watchface": true
     }

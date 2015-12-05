@@ -45,10 +45,13 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
         case 9: numberOfSides = 7; border = 2; break;
         case 10: numberOfSides = 8; border = 2; break;
       }
+      #ifndef PBL_PLATFORM_CHALK
+        currentHeight += 2;
+      #endif
       graphics_context_set_fill_color(gContext, strokeColor);
-      gpath_draw_filled(gContext, gpath_create(draw_regular_shape(numberOfSides, currentWidth, currentHeight+2, 10)));
+      gpath_draw_filled(gContext, gpath_create(draw_regular_shape(numberOfSides, currentWidth, currentHeight, 10)));
       graphics_context_set_fill_color(gContext, fillColor);
-      gpath_draw_filled(gContext, gpath_create(draw_regular_shape(numberOfSides, currentWidth, currentHeight+2, 10-border)));
+      gpath_draw_filled(gContext, gpath_create(draw_regular_shape(numberOfSides, currentWidth, currentHeight, 10-border)));
       break;        
     case 5:     // cross
       graphics_context_set_fill_color(gContext, strokeColor);
@@ -88,9 +91,9 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
       break;
     case 4:     // triangle
       graphics_context_set_fill_color(gContext, strokeColor);
-      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-6}, {currentWidth+9, currentHeight+13}, {currentWidth-8, currentHeight+13}}}));
+      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-11}, {currentWidth+9, currentHeight+8}, {currentWidth-8, currentHeight+8}}}));
       graphics_context_set_fill_color(gContext, fillColor);
-      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-2}, {currentWidth+6, currentHeight+11}, {currentWidth-5, currentHeight+11}}}));
+      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-7}, {currentWidth+6, currentHeight+6}, {currentWidth-5, currentHeight+6}}}));
       break;
     case 2:     // rectangle
       graphics_context_set_fill_color(gContext, fillColor);
@@ -344,19 +347,20 @@ void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask cor
 void draw_time_background(GContext *gContext, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  graphics_context_set_fill_color(gContext, palette.time);
-  graphics_context_set_stroke_color(gContext, palette.time);
   #ifdef PBL_PLATFORM_APLITE
+    graphics_context_set_stroke_color(gContext, palette.time);
     draw_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
     draw_number(hour%10, (GPoint){72, -6}, gContext);
     draw_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
     draw_number(minute%10, (GPoint){72, 84}, gContext);      
   #elif PBL_PLATFORM_BASALT
+    graphics_context_set_fill_color(gContext, palette.time);
     fill_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
     fill_number(hour%10, (GPoint){72, -6}, gContext);
     fill_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
     fill_number(minute%10, (GPoint){72, 84}, gContext);
   #elif PBL_PLATFORM_CHALK
+    graphics_context_set_fill_color(gContext, palette.time);
     fill_number((hour-(hour%10))/10, (GPoint){30, -6}, gContext);
     fill_number(hour%10, (GPoint){92, -6}, gContext);
     fill_number((minute-(minute%10))/10, (GPoint){30, 84}, gContext);
@@ -376,8 +380,8 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   int widthSingleLayer;
 
   #ifdef PBL_PLATFORM_CHALK
-    s_layerRect[0] = (GRect){.origin={20, 40}, .size={104, 24}};
-    s_layerRect[1] = (GRect){.origin={20, 65}, .size={104, 24}};
+    s_layerRect[0] = (GRect){.origin={20, 45}, .size={104, 24}};
+    s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
   #else
     s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
     if(drawNumbers == true){
@@ -600,6 +604,9 @@ void draw_date(GContext *gContext, Color palette){
     w = 144;
   #endif
   GRect rect = GRect(x, y, w, h);
+  //////////////////////////////////////////////////////////////////
+  //snprintf(date_buffer, sizeof(date_buffer), "Fri, 01 Feb 2016");
+  //////////////////////////////////////////////////////////////////
   graphics_draw_text(gContext, 
                      date_buffer,
                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
@@ -730,5 +737,71 @@ void get_date_format(int dateKey){
     case 36:
       strftime(date_buffer, sizeof(date_buffer), "%A,\n%B-%d-%Y", info);
       break;
+  }
+}
+
+void draw_flake(GContext *gContext, struct Flake flake){
+  switch(flake.size){
+    case 0:
+      graphics_draw_pixel(gContext, flake.pos);
+      break;
+    case 1:
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y+1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y+1});
+      break;
+    case 2:
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y+1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y+2});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y+1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-1, flake.pos.y+1});
+      break;
+    case 3:
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-1, flake.pos.y-1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y-1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-1, flake.pos.y+1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y+1});
+      break;
+    case 4:
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y-1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x,   flake.pos.y+1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-1, flake.pos.y  });
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-2, flake.pos.y-1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-2, flake.pos.y+1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-1, flake.pos.y-2});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x-1, flake.pos.y+2});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y-2});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+1, flake.pos.y+2});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+2, flake.pos.y-1});
+      graphics_draw_pixel(gContext, (GPoint){flake.pos.x+2, flake.pos.y+1});
+      break;
+    case 5:
+      tmp.pos.x = flake.pos.x;
+      tmp.pos.y = flake.pos.y;
+      tmp.size = 3;
+      tmp.pos.y = flake.pos.y-2;
+      draw_flake(gContext, tmp);
+      tmp.pos.y = flake.pos.y+2;
+      draw_flake(gContext, tmp);
+      tmp.pos.y = flake.pos.y;
+      tmp.pos.x = flake.pos.x-2;
+      draw_flake(gContext, tmp);
+      tmp.pos.x = flake.pos.x+2;
+      draw_flake(gContext, tmp);
+      break;
+  }
+  
+}
+
+void draw_snow(GContext *gContext, struct Flake *flakes){
+  graphics_context_set_stroke_color(gContext, GColorWhite);
+  printf("draw_snow");
+  for(int i=0; i<NUM_FLAKES; i++){
+    draw_flake(gContext, flakes[i]);
   }
 }

@@ -156,6 +156,12 @@ static void update_time(){
     hour = (cTime->tm_hour == 12) ? 12 : (cTime->tm_hour % 12);
   }
   minute = cTime->tm_min;
+  
+  /////////////////
+  //hour = 14;
+  //minute = 50;
+  /////////////////
+
   dec2binTime(hour, minute);
 }
 
@@ -173,26 +179,27 @@ static void update_view(Layer *layer, GContext *gContext){
   draw_background(gContext, 0, GCornerNone, palette[color]);
   
   // Time in background
-  if(number > 0){
+  if(number > 0)
     draw_time_background(gContext, palette[color]);
-  }
 
   // Dots and help numbers
   draw_clock(gContext, palette[color], (bool)help_num);
   
-  // Time in background
-  if(number > 0){
-    draw_time_background(gContext, palette[color]);
-  }
-
   // Bluetooth
-  draw_bluetooth(gContext);
+  if(bluetooth > 0)
+    draw_bluetooth(gContext);
   
   // Battery
-  draw_battery(gContext, battery, palette[color]);
+  if(battery > 0)
+    draw_battery(gContext, battery, palette[color]); 
 
   // Print date
-  draw_date(gContext, palette[color]);
+  if(date > 0)
+    draw_date(gContext, palette[color]);
+  
+  // It's snow time
+  if(snow)
+    draw_snow(gContext, flakes);
 }
 
 static void window_load(Window *window){
@@ -235,71 +242,86 @@ static void init(){
   // Open AppMessage to transfers
   app_message_open(72, 72);
   
+  shape = 0;
+  color = 0;
+  number = 1;
+  bluetooth = 2;
+  battery = 2;
+  battery_modality = 0;
+  date = 23;
+  help_num = 1;
+  snow = 1;
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
     shape = shape % SHAPE_NUM;
-  }else{
-    shape = 0;
   }
   if(persist_exists(COLOR_KEY)){
 		color = persist_read_int(COLOR_KEY);
     color = color % COLOR_NUM;
-  }else{
-    color = 0;
   }
   if(persist_exists(NUMBER_KEY)){
 		number = persist_read_int(NUMBER_KEY);
     number = number % 2;
-  }else{
-    number = 1;
   }
   if(persist_exists(BLUETOOTH_KEY)){
     bluetooth = persist_read_int(BLUETOOTH_KEY);
     bluetooth = bluetooth % BLUETOOTH_OPTIONS;
-  }else{
-    bluetooth = 2;
   }
   if(persist_exists(BATTERY_KEY)){
     battery = persist_read_int(BATTERY_KEY);
     battery = battery % BATTERY_OPTIONS;
-  }else{
-    battery = 2;
   }
   if(persist_exists(BATTERY_MOD_KEY)){
     battery_modality = persist_read_int(BATTERY_MOD_KEY);
     battery_modality = battery_modality % 2;
-  }else{
-    battery_modality = 0;
   }
   if(persist_exists(DATE_KEY)){
     date = persist_read_int(DATE_KEY);
     date = date % DATE_OPTIONS;
-  }else{
-    date = 23;
   }
   if(persist_exists(HELP_NUM_KEY)){
     help_num = persist_read_int(HELP_NUM_KEY);
     help_num = help_num % 2;
-  }else{
-    help_num = 1;
   }
   
   // Create the colors palette
   #ifdef PBL_COLOR
-  //                     background           text                 strokeDot            fillDot                  time background
-    palette[0] = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorDarkGray,          GColorLightGray};
-    palette[1] = (Color){GColorBlack,         GColorWhite,         GColorLightGray,     GColorWhite,             GColorDarkGray};
-    palette[2] = (Color){GColorCeleste,       GColorDukeBlue,      GColorDukeBlue,      GColorBlueMoon,          GColorCyan};
-    palette[3] = (Color){GColorOxfordBlue,    GColorCeleste,       GColorTiffanyBlue,   GColorCeleste,           GColorBlue};
-    palette[4] = (Color){GColorMelon,         GColorBulgarianRose, GColorBulgarianRose, GColorDarkCandyAppleRed, GColorSunsetOrange};
-    palette[5] = (Color){GColorBulgarianRose, GColorMelon,         GColorSunsetOrange,  GColorMelon,             GColorDarkCandyAppleRed};
-    palette[6] = (Color){GColorInchworm,      GColorDarkGreen,     GColorDarkGreen,     GColorMayGreen,          GColorBrightGreen};
-    palette[7] = (Color){GColorDarkGreen,     GColorScreaminGreen, GColorGreen,         GColorScreaminGreen,     GColorKellyGreen};
+  //                     background             text                         strokeDot                    fillDot                  time background
+    palette[0]  = (Color){GColorWhite,          GColorBlack,                 GColorBlack,                 GColorDarkGray,          GColorLightGray};         // Light
+    palette[1]  = (Color){GColorBlack,          GColorWhite,                 GColorLightGray,             GColorWhite,             GColorDarkGray};          // Dark
+    palette[2]  = (Color){GColorCeleste,        GColorDukeBlue,              GColorDukeBlue,              GColorBlueMoon,          GColorCyan};              // Sky
+    palette[3]  = (Color){GColorOxfordBlue,     GColorCeleste,               GColorTiffanyBlue,           GColorCeleste,           GColorBlue};              // Deap Blue
+    palette[4]  = (Color){GColorMelon,          GColorBulgarianRose,         GColorBulgarianRose,         GColorDarkCandyAppleRed, GColorSunsetOrange};      // Love
+    palette[5]  = (Color){GColorBulgarianRose,  GColorMelon,                 GColorSunsetOrange,          GColorMelon,             GColorDarkCandyAppleRed}; // Passion
+    palette[10] = (Color){GColorWindsorTan,     GColorIcterine,              GColorIcterine,              GColorRajah,             GColorOrange};            // Clean Heart
+    palette[11] = (Color){GColorIcterine,       GColorWindsorTan,            GColorWindsorTan,            GColorOrange,            GColorRajah};             // Orange Gloom
+    palette[6]  = (Color){GColorInchworm,       GColorDarkGreen,             GColorDarkGreen,             GColorMayGreen,          GColorBrightGreen};       // Hope
+    palette[7]  = (Color){GColorDarkGreen,      GColorScreaminGreen,         GColorGreen,                 GColorScreaminGreen,     GColorKellyGreen};        // Freedom
+    palette[8]  = (Color){GColorBlack,          GColorChromeYellow,          GColorChromeYellow,          GColorYellow,            GColorDarkGray};          // Wisdom
+    palette[9]  = (Color){GColorWhite,          GColorBulgarianRose,         GColorBulgarianRose,         GColorRed,               GColorLightGray};         // Trick time
+    palette[12] = (Color){GColorBlack,          GColorJaegerGreen,           GColorJaegerGreen,           GColorGreen,             GColorDarkGray};          // Bash
+    palette[13] = (Color){GColorImperialPurple, GColorRichBrilliantLavender, GColorRichBrilliantLavender, GColorMagenta,           GColorPurple};            // Plum
+    palette[14] = (Color){GColorDarkGreen,      GColorLimerick,              GColorLimerick,              GColorYellow,            GColorArmyGreen};         // Summer Grass
   #else
-    palette[0] = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorBlack,             GColorBlack};
-    palette[1] = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
+    palette[0]  = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorBlack,             GColorBlack};
+    palette[1]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
   #endif
-    
+  
+  // Generate snow flakes
+  if(snow){
+    int x, y, size, flakesSize;
+    // Intializes random number generator
+    srand(time(NULL));
+    flakesSize = sizeof(flakes) / sizeof(flakes[0]);
+    for(int i=0; i<flakesSize; i++){
+      x = rand() % 144;
+      y = rand() % 168;
+      size = rand() % 6;
+      flakes[i].pos = (GPoint){x, y};
+      flakes[i].size = size;
+    }
+  }
+  
   // Create main window view
   s_window = window_create();
   window_set_background_color(s_window, GColorWhite);
