@@ -1,5 +1,5 @@
 var version = '3.5';
-var DEBUG = false;
+var DEBUG = true;
 
 var options = {shape: 0, color: 1, number: 1, bluetooth: 2, battery: 2, battery_modality: 0, date: 23, help_num: 1, snow: 1};
 var webOptions = {version: version, platform: getPlatform(), locale: getLocale()};

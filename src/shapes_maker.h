@@ -8,12 +8,12 @@
 static GRect s_layerRect[2];
 static GBitmap *bt_bitmap_off = NULL;
 static GBitmap *bt_bitmap_on = NULL;
-static struct Flake{
+struct Flake{
   GPoint pos;
   int size;
   int angle;
 }flakes[NUM_FLAKES];
-static struct Flake tmp;
+struct Flake tmp;
 
 GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius);
 void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor);
@@ -28,3 +28,4 @@ void draw_date(GContext *gContext, Color palette);
 void get_date_format(int dateKey);
 void draw_snow(GContext *gContext, struct Flake *flakes);
 void draw_flake(GContext *gContext, struct Flake flake);
+void shake_flakes(struct Flake *flakes);

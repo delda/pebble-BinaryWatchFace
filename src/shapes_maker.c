@@ -795,12 +795,36 @@ void draw_flake(GContext *gContext, struct Flake flake){
       draw_flake(gContext, tmp);
       break;
   }
+}
+
+void shake_flakes(struct Flake *flakes){
+  if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
+  int x, y, size, windowWidth, windowHeight;
+  windowWidth = windowHeight = 0;
+  #ifdef PBL_IF_RECT_ELSE
+    windowWidth = 144;
+    windowHeight = 168;
+  #else
+    windowWidth = 180;
+    windowHeight = 180;
+  #endif
+  // Intializes random number generator
+  srand(time(NULL));
+  for(int i=0; i<NUM_FLAKES; i++){
+    x = rand() % windowWidth;
+    y = rand() % windowHeight;
+    size = rand() % 6;
+    flakes[i].pos = (GPoint){x, y};
+    flakes[i].size = size;
+  }
 }
 
 void draw_snow(GContext *gContext, struct Flake *flakes){
+  if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+
   graphics_context_set_stroke_color(gContext, GColorWhite);
-  printf("draw_snow");
+  shake_flakes(flakes);
   for(int i=0; i<NUM_FLAKES; i++){
     draw_flake(gContext, flakes[i]);
   }

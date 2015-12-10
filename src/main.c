@@ -119,6 +119,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_write_int(HELP_NUM_KEY, help_num);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "help numbers: %d", help_num);
         break;
+      case SNOW_KEY:
+        snow = t->value->uint8;
+        snow = snow % 2;
+        persist_write_int(SNOW_KEY, snow);
+        if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "snow option: %d", snow);
+        break;
     }
     // Get next pair, if any
     t = dict_read_next(iterator);
@@ -198,8 +204,9 @@ static void update_view(Layer *layer, GContext *gContext){
     draw_date(gContext, palette[color]);
   
   // It's snow time
-  if(snow)
+  if(snow){
     draw_snow(gContext, flakes);
+  }
 }
 
 static void window_load(Window *window){
@@ -240,7 +247,7 @@ static void init(){
   app_message_register_outbox_sent(outbox_sent_callback);
 
   // Open AppMessage to transfers
-  app_message_open(72, 72);
+  app_message_open(80, 80);
   
   shape = 0;
   color = 0;
@@ -307,20 +314,21 @@ static void init(){
     palette[1]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
   #endif
   
-  // Generate snow flakes
-  if(snow){
-    int x, y, size, flakesSize;
-    // Intializes random number generator
-    srand(time(NULL));
-    flakesSize = sizeof(flakes) / sizeof(flakes[0]);
-    for(int i=0; i<flakesSize; i++){
-      x = rand() % 144;
-      y = rand() % 168;
-      size = rand() % 6;
-      flakes[i].pos = (GPoint){x, y};
-      flakes[i].size = size;
-    }
+  int flakesSize = sizeof(flakes) / sizeof(flakes[0]);
+  printf("### flakesSize: %d", flakesSize);
+  int x, y, size;
+  int windowWidth = 192;
+  int windowHeight = 144;
+  // Intializes random number generator
+  srand(time(NULL));
+  for(int i=0; i<flakesSize; i++){
+    x = rand() % windowWidth;
+    y = rand() % windowHeight;
+    size = rand() % 6;
+    flakes[i].pos = (GPoint){x, y};
+    flakes[i].size = size;
   }
+
   
   // Create main window view
   s_window = window_create();
