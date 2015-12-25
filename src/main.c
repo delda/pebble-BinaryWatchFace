@@ -164,8 +164,8 @@ static void update_time(){
   minute = cTime->tm_min;
   
   /////////////////
-  //hour = 14;
-  //minute = 50;
+  // hour = 18;
+  // minute = 26;
   /////////////////
 
   dec2binTime(hour, minute);
@@ -180,6 +180,14 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 
 static void update_view(Layer *layer, GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  if(isEasterEggDay()){
+    #ifdef PBL_PLATFORM_APLITE
+      color = 2;
+    #else
+      color = 15;
+    #endif
+  }
     
   // Background
   draw_background(gContext, 0, GCornerNone, palette[color]);
@@ -202,10 +210,12 @@ static void update_view(Layer *layer, GContext *gContext){
   // Print date
   if(date > 0)
     draw_date(gContext, palette[color]);
-  
-  // It's snow time
-  if(snow){
-    draw_snow(gContext, flakes);
+
+  // is easter egg
+  if(isEasterEggDay() || snow){
+    for(int i=0; i<NUM_FLAKES; i++){
+      draw_flake(gContext, s_flakeLayer[i], flakes[i]);
+    }    
   }
 }
 
@@ -221,7 +231,12 @@ static void window_load(Window *window){
   s_bulletsNumber[0] = clock_is_24h_style() ? 5 : 4;
   s_bulletsNumber[1] = 6;
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "bullets: %d - %d", s_bulletsNumber[0], s_bulletsNumber[1]);
-    
+
+  for(int i=0; i<NUM_FLAKES; i++){
+    s_flakeLayer[i] = layer_create(GRect(0, 0, 16, 16));
+    layer_add_child(window_layer, s_flakeLayer[i]);
+  }
+
   layer_set_update_proc(s_mainLayer, update_view);
   
   bluetooth_handler(bluetooth_connection_service_peek());
@@ -309,16 +324,23 @@ static void init(){
     palette[12] = (Color){GColorBlack,          GColorJaegerGreen,           GColorJaegerGreen,           GColorGreen,             GColorDarkGray};          // Bash
     palette[13] = (Color){GColorImperialPurple, GColorRichBrilliantLavender, GColorRichBrilliantLavender, GColorMagenta,           GColorPurple};            // Plum
     palette[14] = (Color){GColorDarkGreen,      GColorLimerick,              GColorLimerick,              GColorYellow,            GColorArmyGreen};         // Summer Grass
+    palette[15] = (Color){GColorRed,            GColorDarkGreen,             GColorDarkGreen,             GColorDarkGreen,         GColorRed};               // Christmas
   #else
     palette[0]  = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorBlack,             GColorBlack};
     palette[1]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
+    palette[2]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
   #endif
   
   int flakesSize = sizeof(flakes) / sizeof(flakes[0]);
-  printf("### flakesSize: %d", flakesSize);
   int x, y, size;
-  int windowWidth = 192;
-  int windowHeight = 144;
+  #ifdef PBL_IF_RECT_ELSE
+    int windowWidth = 144;
+    int windowHeight = 168;
+  #else
+    int windowWidth = 180;
+    int windowHeight = 180;
+  #endif
+    
   // Intializes random number generator
   srand(time(NULL));
   for(int i=0; i<flakesSize; i++){
@@ -328,7 +350,6 @@ static void init(){
     flakes[i].pos = (GPoint){x, y};
     flakes[i].size = size;
   }
-
   
   // Create main window view
   s_window = window_create();

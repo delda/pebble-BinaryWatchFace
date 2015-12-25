@@ -517,21 +517,23 @@ void draw_battery(GContext *gContext, int battery, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   if(battery != BA_NEVER){
+    GColor batteryColor;
     #ifdef PBL_PLATFORM_APLITE
-      graphics_context_set_fill_color(gContext, palette.text);
-      graphics_context_set_stroke_color(gContext, palette.text);
-      graphics_context_set_text_color(gContext, palette.text);        
+      batteryColor = palette.text;
     #else
       if(battery_level < BA_PERCENT_WARNING){
-        graphics_context_set_fill_color(gContext, GColorRed);
-        graphics_context_set_stroke_color(gContext, GColorRed);
-        graphics_context_set_text_color(gContext, GColorRed);
+        if(isEasterEggDay()){
+          batteryColor = palette.text;
+        }else{
+          batteryColor = GColorRed; 
+        }
       }else{
-        graphics_context_set_fill_color(gContext, palette.text);
-        graphics_context_set_stroke_color(gContext, palette.text);
-        graphics_context_set_text_color(gContext, palette.text);
+        batteryColor = palette.text;
       }
     #endif
+    graphics_context_set_fill_color(gContext, batteryColor);
+    graphics_context_set_stroke_color(gContext, batteryColor);
+    graphics_context_set_text_color(gContext, batteryColor);        
   }
 
   if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
@@ -543,7 +545,6 @@ void draw_battery(GContext *gContext, int battery, Color palette){
       x = 115;
       y = 7;
     #endif
-    int z;
     // if i display bluetooth image too, battery sign must shift right
     #ifdef PBL_PLATFORM_CHALK
       if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
@@ -554,7 +555,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
       graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={23,13}});
       graphics_draw_line(gContext, (GPoint){.x=x+2*11+1, .y=y+4}, (GPoint){.x=x+2*11+1, .y=y+9});
 
-      for(z=1; z<=battery_level/10; z++){
+      for(int z=1; z<=battery_level/10; z++){
         graphics_draw_line(gContext, (GPoint){.x=x+2*z, .y=y+2}, (GPoint){.x=x+2*z, .y=y+10});
       }
       if(battery_level < BA_PERCENT_WARNING){
@@ -587,26 +588,33 @@ void draw_battery(GContext *gContext, int battery, Color palette){
 
 void draw_date(GContext *gContext, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
-  graphics_context_set_text_color(gContext, palette.text);
+
   get_date_format(date);
   int x;
   int y;
   int w;
-  int h = (date > 28) ? 120 : 136;
+  int h = (date > 28 && !isEasterEggDay()) ? 120 : 136;
   #ifdef PBL_PLATFORM_CHALK
     x = 24;
     y = (date > 28) ? 5 : 20;
     w = 132;
   #else
     x = 0;
-    y = (date > 28) ? 120 : 136;
+    y = (date > 28 && !isEasterEggDay()) ? 120 : 136;
     w = 144;
   #endif
   GRect rect = GRect(x, y, w, h);
-  //////////////////////////////////////////////////////////////////
-  //snprintf(date_buffer, sizeof(date_buffer), "Fri, 01 Feb 2016");
-  //////////////////////////////////////////////////////////////////
+  if(isEasterEggDay()){
+    time_t now = time(NULL);
+    struct tm *timeinfo = localtime(&now);
+    if(timeinfo->tm_mon==11 && timeinfo->tm_mday==25){
+      snprintf(date_buffer, sizeof(date_buffer), "Merry Christmas!");
+    }else if(timeinfo->tm_mon==0 && timeinfo->tm_mday==1){
+      snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
+    }
+  }else{
+  }
+  graphics_context_set_text_color(gContext, palette.text);
   graphics_draw_text(gContext, 
                      date_buffer,
                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
@@ -614,7 +622,11 @@ void draw_date(GContext *gContext, Color palette){
                      GTextOverflowModeWordWrap,
                      GTextAlignmentCenter,
                      NULL
-                    );
+                    );    
+  //////////////////////////////////////////////////////////////////
+  // graphics_context_set_text_color(gContext, GColorWhite);
+  // snprintf(date_buffer, sizeof(date_buffer), "Merry Christmas!");
+  //////////////////////////////////////////////////////////////////
 }
 
 void get_date_format(int dateKey){
@@ -740,7 +752,8 @@ void get_date_format(int dateKey){
   }
 }
 
-void draw_flake(GContext *gContext, struct Flake flake){
+void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake){
+  graphics_context_set_stroke_color(gContext, GColorWhite);
   switch(flake.size){
     case 0:
       graphics_draw_pixel(gContext, flake.pos);
@@ -785,14 +798,14 @@ void draw_flake(GContext *gContext, struct Flake flake){
       tmp.pos.y = flake.pos.y;
       tmp.size = 3;
       tmp.pos.y = flake.pos.y-2;
-      draw_flake(gContext, tmp);
+      draw_flake(gContext, flake_layer, tmp);
       tmp.pos.y = flake.pos.y+2;
-      draw_flake(gContext, tmp);
+      draw_flake(gContext, flake_layer, tmp);
       tmp.pos.y = flake.pos.y;
       tmp.pos.x = flake.pos.x-2;
-      draw_flake(gContext, tmp);
+      draw_flake(gContext, flake_layer, tmp);
       tmp.pos.x = flake.pos.x+2;
-      draw_flake(gContext, tmp);
+      draw_flake(gContext, flake_layer, tmp);
       break;
   }
 }
@@ -823,9 +836,21 @@ void shake_flakes(struct Flake *flakes){
 void draw_snow(GContext *gContext, struct Flake *flakes){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  graphics_context_set_stroke_color(gContext, GColorWhite);
   shake_flakes(flakes);
   for(int i=0; i<NUM_FLAKES; i++){
-    draw_flake(gContext, flakes[i]);
+    draw_flake(gContext, s_flakeLayer[i], flakes[i]);
   }
+}
+
+void anim_stopped_handler(Animation *animation, bool finished, void *context) {}
+
+int isEasterEggDay(){
+  time_t now = time(NULL);
+  struct tm *timeinfo = localtime(&now);
+  // is easter egg
+  if((timeinfo->tm_mon==11 && timeinfo->tm_mday==25) || 
+     (timeinfo->tm_mon==0 && timeinfo->tm_mday==1)){
+    return true;
+  }
+  return false;
 }

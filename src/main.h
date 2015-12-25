@@ -15,6 +15,8 @@ static uint8_t sync_buffer[32];
 static GColor backgroundColor;
 static GColor textColor;
 
+static bool isEasterEgg = 0;
+
 // bluetooth
 static BitmapLayer *bt_layer;
 // Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
@@ -38,11 +40,11 @@ enum appParameters {
 
 static int SHAPE_NUM = 11;
 #ifdef PBL_COLOR
-  static int COLOR_NUM = 15;
-  static Color palette[15];
+  static int COLOR_NUM = 16;
+  static Color palette[16];
 #else
-  static int COLOR_NUM = 2;
-  static Color palette[2];
+  static int COLOR_NUM = 3;
+  static Color palette[3];
 #endif
 static int BLUETOOTH_OPTIONS = 3;
 static int BATTERY_OPTIONS = 3;

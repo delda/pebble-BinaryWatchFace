@@ -13,6 +13,7 @@ struct Flake{
   int size;
   int angle;
 }flakes[NUM_FLAKES];
+static Layer *s_flakeLayer[NUM_FLAKES];
 struct Flake tmp;
 
 GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius);
@@ -27,5 +28,7 @@ void draw_battery(GContext *gContext, int battery, Color palette);
 void draw_date(GContext *gContext, Color palette);
 void get_date_format(int dateKey);
 void draw_snow(GContext *gContext, struct Flake *flakes);
-void draw_flake(GContext *gContext, struct Flake flake);
+void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake);
 void shake_flakes(struct Flake *flakes);
+void anim_stopped_handler(Animation *animation, bool finished, void *context);
+int isEasterEggDay();
