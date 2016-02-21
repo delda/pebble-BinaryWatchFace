@@ -38,10 +38,10 @@ enum appParameters {
   SNOW_KEY        = 0x8,
 };
 
-static int SHAPE_NUM = 11;
+static int SHAPE_NUM = 12;
 #ifdef PBL_COLOR
-  static int COLOR_NUM = 16;
-  static Color palette[16];
+  static int COLOR_NUM = 17;
+  static Color palette[17];
 #else
   static int COLOR_NUM = 3;
   static Color palette[3];

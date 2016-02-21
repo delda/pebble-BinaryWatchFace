@@ -1,3 +1,3 @@
 #include <pebble.h>
 
-static int DEBUG = true;
+static int DEBUG = false;

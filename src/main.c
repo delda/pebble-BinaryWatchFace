@@ -181,11 +181,13 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 static void update_view(Layer *layer, GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  if(isEasterEggDay()){
+  int esternEgg = isEasterEggDay();
+  if(esternEgg != 0){
     #ifdef PBL_PLATFORM_APLITE
-      color = 2;
+      color = 0;
     #else
-      color = 15;
+      shape = (esternEgg == 2) ? 11 : shape;
+      color = (esternEgg == 1) ? 15 : 16;
     #endif
   }
     
@@ -212,7 +214,7 @@ static void update_view(Layer *layer, GContext *gContext){
     draw_date(gContext, palette[color]);
 
   // is easter egg
-  if(isEasterEggDay() || snow){
+  if(isEasterEggDay() != 0 || snow){
     for(int i=0; i<NUM_FLAKES; i++){
       draw_flake(gContext, s_flakeLayer[i], flakes[i]);
     }    
@@ -272,7 +274,7 @@ static void init(){
   battery_modality = 0;
   date = 23;
   help_num = 1;
-  snow = 1;
+  snow = 0;
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
     shape = shape % SHAPE_NUM;
@@ -305,6 +307,10 @@ static void init(){
     help_num = persist_read_int(HELP_NUM_KEY);
     help_num = help_num % 2;
   }
+  if(persist_exists(SNOW_KEY)){
+    snow = persist_read_int(SNOW_KEY);
+    snow = snow % 2;
+  }
   
   // Create the colors palette
   #ifdef PBL_COLOR
@@ -325,6 +331,7 @@ static void init(){
     palette[13] = (Color){GColorImperialPurple, GColorRichBrilliantLavender, GColorRichBrilliantLavender, GColorMagenta,           GColorPurple};            // Plum
     palette[14] = (Color){GColorDarkGreen,      GColorLimerick,              GColorLimerick,              GColorYellow,            GColorArmyGreen};         // Summer Grass
     palette[15] = (Color){GColorRed,            GColorDarkGreen,             GColorDarkGreen,             GColorDarkGreen,         GColorRed};               // Christmas
+    palette[16] = (Color){GColorBlack,          GColorPastelYellow,          GColorPastelYellow,          GColorChromeYellow,      GColorBlack};             // Christmas
   #else
     palette[0]  = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorBlack,             GColorBlack};
     palette[1]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};

@@ -5,7 +5,47 @@
 
 #include "settings.c"
 
-GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius){
+GPathInfo *draw_star(int number_of_sides, int w, int h, int radius){
+  if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
+  
+  number_of_sides = 5;
+  GPathInfo *shape;
+  shape = (GPathInfo *) malloc (sizeof(GPathInfo));
+  GPoint *inPoints, *outPoints, *points;
+  inPoints = (GPoint *) calloc (number_of_sides, sizeof(GPoint));
+  outPoints = (GPoint *) calloc (number_of_sides, sizeof(GPoint));
+  points = (GPoint *) calloc (number_of_sides*2, sizeof(GPoint));
+  int32_t outAngle = 0;
+  int32_t inAngle = TRIG_MAX_ANGLE / (number_of_sides * 2);
+  int outRadius = radius;
+  int inRadius = radius / 2;
+  for(int i=0; i<number_of_sides; i++){
+    outPoints[i].x = (int16_t)(sin_lookup(outAngle) * (int32_t)outRadius / TRIG_MAX_RATIO) + w;
+    outPoints[i].y = (int16_t)(-cos_lookup(outAngle) * (int32_t)outRadius / TRIG_MAX_RATIO) + h;
+//    points[(number_of_sides-i)%number_of_sides].x = (int16_t)(sin_lookup(-outAngle) * (int32_t)outRadius / TRIG_MAX_RATIO) + w;
+//    points[(number_of_sides-i)%number_of_sides].y = (int16_t)(-cos_lookup(-outAngle) * (int32_t)outRadius / TRIG_MAX_RATIO) + h;
+    outAngle += (int32_t)(TRIG_MAX_ANGLE / number_of_sides);
+  }
+  for(int i=0; i<number_of_sides; i++){
+    inPoints[i].x = (int16_t)(sin_lookup(inAngle) * (int32_t)inRadius / TRIG_MAX_RATIO) + w;
+    inPoints[i].y = (int16_t)(-cos_lookup(inAngle) * (int32_t)inRadius / TRIG_MAX_RATIO) + h;
+//    points[(number_of_sides-i)%number_of_sides].x = (int16_t)(sin_lookup(-inAngle) * (int32_t)inRadius / TRIG_MAX_RATIO) + w;
+//    points[(number_of_sides-i)%number_of_sides].y = (int16_t)(-cos_lookup(-inAngle) * (int32_t)inRadius / TRIG_MAX_RATIO) + h;
+    inAngle += (int32_t)(TRIG_MAX_ANGLE / number_of_sides);
+//    printf("%lu, %lu", outAngle, inAngle);
+  }
+  for(int i=0; i<number_of_sides; i++){
+    points[i*2] = outPoints[i];
+    points[i*2+1] = inPoints[i];
+  }
+  shape->num_points = number_of_sides * 2;
+  shape->points = points;
+  free(inPoints);
+  free(outPoints);
+  return shape;  
+}
+
+GPathInfo *draw_regular_shape(int number_of_sides, int w, int h, int radius){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   GPathInfo *shape;
@@ -22,6 +62,7 @@ GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius){
   }
   shape->num_points = number_of_sides;
   shape->points = points;
+  free(points);
   return shape;  
 }
 
@@ -31,6 +72,13 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
   int numberOfSides = 0;
   int border = 0;
   switch(shape){
+    case 11:   // star
+      numberOfSides = 5;
+      graphics_context_set_fill_color(gContext, strokeColor);
+      gpath_draw_filled(gContext, gpath_create(draw_star(numberOfSides, currentWidth, currentHeight, 12)));
+      graphics_context_set_fill_color(gContext, fillColor);
+      gpath_draw_filled(gContext, gpath_create(draw_star(numberOfSides, currentWidth, currentHeight, 8)));
+      break;
     case 3:
     case 6:
     case 7:
@@ -604,16 +652,18 @@ void draw_date(GContext *gContext, Color palette){
     w = 144;
   #endif
   GRect rect = GRect(x, y, w, h);
-  if(isEasterEggDay()){
-    time_t now = time(NULL);
-    struct tm *timeinfo = localtime(&now);
-    if(timeinfo->tm_mon==11 && timeinfo->tm_mday==25){
+  int esternEgg = isEasterEggDay();
+  if(esternEgg != 0){
+    if(esternEgg == 1){
       snprintf(date_buffer, sizeof(date_buffer), "Merry Christmas!");
-    }else if(timeinfo->tm_mon==0 && timeinfo->tm_mday==1){
+    }else if(esternEgg == 2){
       snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
     }
-  }else{
   }
+  //////////////////////////////////////////////////////////////////
+  // graphics_context_set_text_color(gContext, GColorWhite);
+  // snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
+  //////////////////////////////////////////////////////////////////
   graphics_context_set_text_color(gContext, palette.text);
   graphics_draw_text(gContext, 
                      date_buffer,
@@ -623,10 +673,6 @@ void draw_date(GContext *gContext, Color palette){
                      GTextAlignmentCenter,
                      NULL
                     );    
-  //////////////////////////////////////////////////////////////////
-  // graphics_context_set_text_color(gContext, GColorWhite);
-  // snprintf(date_buffer, sizeof(date_buffer), "Merry Christmas!");
-  //////////////////////////////////////////////////////////////////
 }
 
 void get_date_format(int dateKey){
@@ -754,6 +800,7 @@ void get_date_format(int dateKey){
 
 void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake){
   graphics_context_set_stroke_color(gContext, GColorWhite);
+  graphics_context_set_stroke_color(gContext, GColorChromeYellow);
   switch(flake.size){
     case 0:
       graphics_draw_pixel(gContext, flake.pos);
@@ -848,9 +895,10 @@ int isEasterEggDay(){
   time_t now = time(NULL);
   struct tm *timeinfo = localtime(&now);
   // is easter egg
-  if((timeinfo->tm_mon==11 && timeinfo->tm_mday==25) || 
-     (timeinfo->tm_mon==0 && timeinfo->tm_mday==1)){
-    return true;
+  if(timeinfo->tm_mon==11 && timeinfo->tm_mday==25){
+    return 1;
+  }else if(timeinfo->tm_mon==0 && timeinfo->tm_mday==1){
+    return 2;
   }
-  return false;
+  return 0;
 }
