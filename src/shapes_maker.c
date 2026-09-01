@@ -374,17 +374,29 @@ void draw_number(int number, GPoint position, GContext *gContext){
   }
 }
 
+static GRect screen_bounds(void) {
+  Window *window = window_stack_get_top_window();
+  return layer_get_bounds(window_get_root_layer(window));
+}
+
+// Emery is larger than the original 144x168 rectangular canvas.  Keep the
+// established composition intact there, but centre it on the larger display.
+static GPoint content_offset(void) {
+#if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+  GRect bounds = screen_bounds();
+  return GPoint((bounds.size.w - 144) / 2, (bounds.size.h - 168) / 2);
+#else
+  return GPointZero;
+#endif
+}
+
 void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask corner_mask, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  #ifdef PBL_ROUND
-    GRect rect = GRect(0, 0, 180, 180);
-  #else
-    GRect rect = GRect(0, 0, 144, 168);
-  #endif
+  GRect rect = screen_bounds();
   graphics_context_set_fill_color(gContext, palette.background);
   graphics_fill_rect(gContext, rect, corner_radius, corner_mask);
-  #ifdef PBL_ROUND
+  #ifdef PBL_PLATFORM_CHALK
     GRect base = GRect(0, 165, 180, 20);
     graphics_context_set_fill_color(gContext, palette.fillDot);
     graphics_fill_rect(gContext, base, 0, GCornerNone);
@@ -395,26 +407,27 @@ void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask cor
 void draw_time_background(GContext *gContext, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  #ifdef PBL_PLATFORM_APLITE
+  #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
     graphics_context_set_stroke_color(gContext, palette.time);
     draw_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
     draw_number(hour%10, (GPoint){72, -6}, gContext);
     draw_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
     draw_number(minute%10, (GPoint){72, 84}, gContext);      
-  #elif PBL_PLATFORM_BASALT
-    graphics_context_set_fill_color(gContext, palette.time);
-    fill_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
-    fill_number(hour%10, (GPoint){72, -6}, gContext);
-    fill_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
-    fill_number(minute%10, (GPoint){72, 84}, gContext);
   #elif PBL_PLATFORM_CHALK
     graphics_context_set_fill_color(gContext, palette.time);
     fill_number((hour-(hour%10))/10, (GPoint){30, -6}, gContext);
     fill_number(hour%10, (GPoint){92, -6}, gContext);
     fill_number((minute-(minute%10))/10, (GPoint){30, 84}, gContext);
     fill_number(minute%10, (GPoint){92, 84}, gContext);      
+  #else
+    GPoint offset = content_offset();
+    graphics_context_set_fill_color(gContext, palette.time);
+    fill_number((hour-(hour%10))/10, (GPoint){10 + offset.x, -6 + offset.y}, gContext);
+    fill_number(hour%10, (GPoint){72 + offset.x, -6 + offset.y}, gContext);
+    fill_number((minute-(minute%10))/10, (GPoint){10 + offset.x, 84 + offset.y}, gContext);
+    fill_number(minute%10, (GPoint){72 + offset.x, 84 + offset.y}, gContext);
   #endif
-  #ifdef PBL_ROUND
+  #ifdef PBL_PLATFORM_CHALK
     GRect base = GRect(0, 165, 180, 20);
     graphics_context_set_fill_color(gContext, palette.fillDot);
     graphics_fill_rect(gContext, base, 0, GCornerNone);
@@ -431,11 +444,12 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
     s_layerRect[0] = (GRect){.origin={20, 45}, .size={104, 24}};
     s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
   #else
-    s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
+    GPoint offset = content_offset();
+    s_layerRect[0] = (GRect){.origin={20 + offset.x, 30 + offset.y}, .size={104, 24}};
     if(drawNumbers == true){
-      s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
+      s_layerRect[1] = (GRect){.origin={20 + offset.x, 70 + offset.y}, .size={104, 24}};
     }else{
-      s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}};
+      s_layerRect[1] = (GRect){.origin={20 + offset.x, 60 + offset.y}, .size={104, 24}};
     }
   #endif
 
@@ -503,7 +517,7 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
 void draw_bluetooth(GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  #if PBL_PLATFORM_APLITE
+  #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
     if(bt_bitmap_off == NULL)
       bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_OFF_IMG);
     if(bt_bitmap_on == NULL)
@@ -520,7 +534,7 @@ void draw_bluetooth(GContext *gContext){
     int y = 7;
     int w = 10;
     int h = 16;
-    #ifdef PBL_PLATFORM_APLITE
+    #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
       if(bluetooth_status == 1){
         w = 6;
         h = 14;
@@ -537,8 +551,13 @@ void draw_bluetooth(GContext *gContext){
         x -= 20;
       }
     #endif
+    #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+      GPoint offset = content_offset();
+      x += offset.x;
+      y += offset.y;
+    #endif
     GRect rect = GRect(x, y, w, h);
-    #ifdef PBL_PLATFORM_APLITE
+    #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
       graphics_context_set_compositing_mode(gContext, GCompOpOr);
     #else
       graphics_context_set_compositing_mode(gContext, GCompOpSet);
@@ -548,7 +567,7 @@ void draw_bluetooth(GContext *gContext){
     }else{
       graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
     }
-    #ifdef PBL_PLATFORM_APLITE
+    #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
       if(color == 0){
         graphics_context_set_compositing_mode(gContext, GCompOpClear);
         if(bluetooth_status == 0){
@@ -566,7 +585,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
   
   if(battery != BA_NEVER){
     GColor batteryColor;
-    #ifdef PBL_PLATFORM_APLITE
+      #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
       batteryColor = palette.text;
     #else
       if(battery_level < BA_PERCENT_WARNING){
@@ -592,6 +611,11 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     #else
       x = 115;
       y = 7;
+    #endif
+    #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+      GPoint offset = content_offset();
+      x += offset.x;
+      y += offset.y;
     #endif
     // if i display bluetooth image too, battery sign must shift right
     #ifdef PBL_PLATFORM_CHALK
@@ -650,6 +674,11 @@ void draw_date(GContext *gContext, Color palette){
     x = 0;
     y = (date > 28 && !isEasterEggDay()) ? 120 : 136;
     w = 144;
+  #endif
+  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    GPoint offset = content_offset();
+    x += offset.x;
+    y += offset.y;
   #endif
   GRect rect = GRect(x, y, w, h);
   int esternEgg = isEasterEggDay();
@@ -860,15 +889,10 @@ void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake){
 void shake_flakes(struct Flake *flakes){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  int x, y, size, windowWidth, windowHeight;
-  windowWidth = windowHeight = 0;
-  #ifdef PBL_IF_RECT_ELSE
-    windowWidth = 144;
-    windowHeight = 168;
-  #else
-    windowWidth = 180;
-    windowHeight = 180;
-  #endif
+  int x, y, size;
+  GRect bounds = screen_bounds();
+  int windowWidth = bounds.size.w;
+  int windowHeight = bounds.size.h;
   // Intializes random number generator
   srand(time(NULL));
   for(int i=0; i<NUM_FLAKES; i++){

@@ -340,13 +340,9 @@ static void init(){
   
   int flakesSize = sizeof(flakes) / sizeof(flakes[0]);
   int x, y, size;
-  #ifdef PBL_IF_RECT_ELSE
-    int windowWidth = 144;
-    int windowHeight = 168;
-  #else
-    int windowWidth = 180;
-    int windowHeight = 180;
-  #endif
+  GRect windowBounds = layer_get_bounds(window_get_root_layer(s_window));
+  int windowWidth = windowBounds.size.w;
+  int windowHeight = windowBounds.size.h;
     
   // Intializes random number generator
   srand(time(NULL));

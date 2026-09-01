@@ -130,7 +130,7 @@ function getPlatform(){
     if(DEBUG) console.log('PebbleKit JS ready on Aplite!');
     return 0;
   }else{
-    if(DEBUG) console.log('PebbleKit JS ready on Basalt!');
+    if(DEBUG) console.log('PebbleKit JS ready on '+current_watch.platform+'!');
     return 1;
   }
 }

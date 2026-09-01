@@ -14,7 +14,8 @@
                 "file": "images/Bluetooth_off_15x15.png",
                 "name": "BLUETOOTH_BW_OFF_IMG",
                 "targetPlatforms": [
-                    "aplite"
+                    "aplite",
+                    "flint"
                 ],
                 "type": "bitmap"
             },
@@ -22,7 +23,8 @@
                 "file": "images/Bluetooth_15x15.png",
                 "name": "BLUETOOTH_BW_ON_IMG",
                 "targetPlatforms": [
-                    "aplite"
+                    "aplite",
+                    "flint"
                 ],
                 "type": "bitmap"
             },
@@ -31,7 +33,10 @@
                 "name": "BLUETOOTH_OFF_IMG",
                 "targetPlatforms": [
                     "basalt",
-                    "chalk"
+                    "chalk",
+                    "diorite",
+                    "emery",
+                    "gabbro"
                 ],
                 "type": "bitmap"
             },
@@ -40,7 +45,10 @@
                 "name": "BLUETOOTH_ON_IMG",
                 "targetPlatforms": [
                     "basalt",
-                    "chalk"
+                    "chalk",
+                    "diorite",
+                    "emery",
+                    "gabbro"
                 ],
                 "type": "bitmap"
             },
@@ -62,10 +70,14 @@
     "targetPlatforms": [
         "aplite",
         "basalt",
-        "chalk"
+        "chalk",
+        "diorite",
+        "emery",
+        "flint",
+        "gabbro"
     ],
     "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
-    "versionLabel": "3.6",
+    "versionLabel": "4.0",
     "watchapp": {
         "watchface": true
     }
