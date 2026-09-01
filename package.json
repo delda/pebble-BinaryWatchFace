@@ -1,0 +1,105 @@
+{
+  "name": "binary-watchface",
+  "author": "delda@virgilio.it",
+  "version": "3.6.0",
+  "private": true,
+  "keywords": [
+    "pebble-app"
+  ],
+  "dependencies": {
+    "@rebble/clay": "^1.1.0"
+  },
+  "pebble": {
+    "sdkVersion": "3",
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint",
+      "gabbro"
+    ],
+    "enableMultiJS": true,
+    "capabilities": [
+      "location",
+      "configurable"
+    ],
+    "projectType": "native",
+    "displayName": "BinaryWatchFace",
+    "uuid": "1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77",
+    "watchapp": {
+      "watchface": true,
+      "hiddenApp": false,
+      "onlyShownOnCommunication": false
+    },
+    "resources": {
+      "media": [
+        {
+          "file": "images/Bluetooth_off_15x15.png",
+          "name": "BLUETOOTH_BW_OFF_IMG",
+          "targetPlatforms": [
+            "aplite",
+            "flint"
+          ],
+          "type": "bitmap"
+        },
+        {
+          "file": "images/Bluetooth_15x15.png",
+          "name": "BLUETOOTH_BW_ON_IMG",
+          "targetPlatforms": [
+            "aplite",
+            "flint"
+          ],
+          "type": "bitmap"
+        },
+        {
+          "file": "images/Bluetooth_off_10x16.png",
+          "name": "BLUETOOTH_OFF_IMG",
+          "targetPlatforms": [
+            "basalt",
+            "chalk",
+            "diorite",
+            "emery",
+            "gabbro"
+          ],
+          "type": "bitmap"
+        },
+        {
+          "file": "images/Bluetooth_10x16.png",
+          "name": "BLUETOOTH_ON_IMG",
+          "targetPlatforms": [
+            "basalt",
+            "chalk",
+            "diorite",
+            "emery",
+            "gabbro"
+          ],
+          "type": "bitmap"
+        },
+        {
+          "file": "images/binary.png",
+          "menuIcon": true,
+          "name": "MENU_ICON",
+          "type": "bitmap"
+        },
+        {
+          "file": "fonts/OpenSans-Regular.ttf",
+          "name": "FONT_OPEN_SANS_REGULAR_14",
+          "type": "font"
+        }
+      ]
+    },
+    "messageKeys": {
+      "SHAPE_KEY": 0,
+      "COLOR_KEY": 1,
+      "NUMBER_KEY": 2,
+      "BLUETOOTH_KEY": 3,
+      "BATTERY_KEY": 4,
+      "BATTERY_MOD_KEY": 5,
+      "DATE_KEY": 6,
+      "HELP_NUM_KEY": 7,
+      "SNOW_KEY": 8
+    }
+  }
+}

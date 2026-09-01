@@ -1,0 +1,100 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "Binary Watch"
+  },
+  {
+    "type": "text",
+    "defaultValue": "Personalizza l'orologio binario. Le impostazioni vengono salvate sul telefono e inviate all'orologio al tocco di Salva."
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "select",
+        "messageKey": "SHAPE_KEY",
+        "label": "Figura",
+        "defaultValue": "0",
+        "serializeValueAs": "integer",
+        "options": [
+          {"label": "Cerchio", "value": "0"}, {"label": "Quadrato", "value": "1"},
+          {"label": "Rettangolo", "value": "2"}, {"label": "Quadrato con bordo", "value": "3"},
+          {"label": "Triangolo", "value": "4"}, {"label": "Croce", "value": "5"},
+          {"label": "Triangolo con bordo", "value": "6"}, {"label": "Pentagono", "value": "7"},
+          {"label": "Esagono", "value": "8"}, {"label": "Ettagono", "value": "9"},
+          {"label": "Ottagono", "value": "10"}, {"label": "Stella", "value": "11"}
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "COLOR_KEY",
+        "label": "Tema",
+        "defaultValue": "0",
+        "serializeValueAs": "integer",
+        "capabilities": ["COLOR"],
+        "options": [
+          {"label": "Chiaro", "value": "0"}, {"label": "Scuro", "value": "1"},
+          {"label": "Cielo", "value": "2"}, {"label": "Blu profondo", "value": "3"},
+          {"label": "Amore", "value": "4"}, {"label": "Passione", "value": "5"},
+          {"label": "Speranza", "value": "6"}, {"label": "Libertà", "value": "7"},
+          {"label": "Saggezza", "value": "8"}, {"label": "Trick time", "value": "9"},
+          {"label": "Cuore pulito", "value": "10"}, {"label": "Arancio cupo", "value": "11"},
+          {"label": "Bash", "value": "12"}, {"label": "Prugna", "value": "13"},
+          {"label": "Erba estiva", "value": "14"}, {"label": "Natale", "value": "15"},
+          {"label": "Capodanno", "value": "16"}
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "COLOR_KEY",
+        "label": "Tema",
+        "defaultValue": "0",
+        "serializeValueAs": "integer",
+        "capabilities": ["BW"],
+        "options": [
+          {"label": "Chiaro", "value": "0"}, {"label": "Scuro", "value": "1"}, {"label": "Contrasto", "value": "2"}
+        ]
+      },
+      {"type": "toggle", "messageKey": "NUMBER_KEY", "label": "Numeri grandi sullo sfondo", "defaultValue": true},
+      {"type": "toggle", "messageKey": "HELP_NUM_KEY", "label": "Mostra i valori dei bit", "defaultValue": true}
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "select", "messageKey": "BLUETOOTH_KEY", "label": "Icona Bluetooth", "defaultValue": "2", "serializeValueAs": "integer",
+        "options": [{"label": "Mai", "value": "0"}, {"label": "Solo se disconnesso", "value": "1"}, {"label": "Sempre", "value": "2"}]
+      },
+      {
+        "type": "select", "messageKey": "BATTERY_KEY", "label": "Indicatore batteria", "defaultValue": "2", "serializeValueAs": "integer",
+        "options": [{"label": "Mai", "value": "0"}, {"label": "Sotto il 30%", "value": "1"}, {"label": "Sempre", "value": "2"}]
+      },
+      {
+        "type": "select", "messageKey": "BATTERY_MOD_KEY", "label": "Formato batteria", "defaultValue": "0", "serializeValueAs": "integer",
+        "options": [{"label": "Icona", "value": "0"}, {"label": "Percentuale", "value": "1"}]
+      },
+      {"type": "toggle", "messageKey": "SNOW_KEY", "label": "Nevicata", "defaultValue": false}
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "select", "messageKey": "DATE_KEY", "label": "Formato data", "defaultValue": "23", "serializeValueAs": "integer",
+        "options": [
+          {"label": "Nascosta", "value": "0"}, {"label": "31-12-20", "value": "1"}, {"label": "31.12.20", "value": "2"}, {"label": "31/12/20", "value": "3"}, {"label": "31 12 20", "value": "4"},
+          {"label": "31-12-2020", "value": "5"}, {"label": "31.12.2020", "value": "6"}, {"label": "31/12/2020", "value": "7"}, {"label": "31 12 2020", "value": "8"},
+          {"label": "12-31-2020", "value": "9"}, {"label": "12.31.2020", "value": "10"}, {"label": "12/31/2020", "value": "11"}, {"label": "12 31 2020", "value": "12"},
+          {"label": "2020-12-31", "value": "13"}, {"label": "2020.12.31", "value": "14"}, {"label": "2020/12/31", "value": "15"}, {"label": "2020 12 31", "value": "16"},
+          {"label": "Dec/31/2020", "value": "17"}, {"label": "Dec 31, 2020", "value": "18"}, {"label": "31 Dec 2020", "value": "19"}, {"label": "31 Dec, 2020", "value": "20"},
+          {"label": "Thu, Dec/31/2020", "value": "21"}, {"label": "Thu, Dec 31, 2020", "value": "22"}, {"label": "Thu, 31 Dec 2020", "value": "23"}, {"label": "Thu, 31 Dec, 2020", "value": "24"},
+          {"label": "31 December 2020", "value": "25"}, {"label": "31 December 2020", "value": "26"}, {"label": "December 31, 2020", "value": "27"}, {"label": "December-31-2020", "value": "28"},
+          {"label": "Thu / 31 December 2020", "value": "29"}, {"label": "Thu / 31 December 2020", "value": "30"}, {"label": "Thu / December 31, 2020", "value": "31"}, {"label": "Thu / December-31-2020", "value": "32"},
+          {"label": "Thursday / 31 December 2020", "value": "33"}, {"label": "Thursday / 31 December 2020", "value": "34"}, {"label": "Thursday / December 31, 2020", "value": "35"}, {"label": "Thursday / December-31-2020", "value": "36"}
+        ]
+      }
+    ]
+  },
+  {"type": "submit", "defaultValue": "Salva"}
+]
