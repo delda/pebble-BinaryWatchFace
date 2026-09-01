@@ -256,6 +256,10 @@ static void init(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   snprintf(bufferLocale, sizeof(bufferLocale), "%s", i18n_get_system_locale());
+
+  // Create the window before accessing its root layer below.
+  s_window = window_create();
+  window_set_background_color(s_window, GColorWhite);
   
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);
@@ -353,10 +357,6 @@ static void init(){
     flakes[i].pos = (GPoint){x, y};
     flakes[i].size = size;
   }
-  
-  // Create main window view
-  s_window = window_create();
-  window_set_background_color(s_window, GColorWhite);
   
   // Set window handlers
   window_set_window_handlers(s_window, (WindowHandlers) {

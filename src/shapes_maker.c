@@ -7,7 +7,7 @@
 
 GPathInfo *draw_star(int number_of_sides, int w, int h, int radius){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   number_of_sides = 5;
   GPathInfo *shape;
   shape = (GPathInfo *) malloc (sizeof(GPathInfo));
@@ -42,12 +42,12 @@ GPathInfo *draw_star(int number_of_sides, int w, int h, int radius){
   shape->points = points;
   free(inPoints);
   free(outPoints);
-  return shape;  
+  return shape;
 }
 
 GPathInfo *draw_regular_shape(int number_of_sides, int w, int h, int radius){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   GPathInfo *shape;
   shape = (GPathInfo *) malloc (sizeof(GPathInfo));
   GPoint *points;
@@ -62,22 +62,51 @@ GPathInfo *draw_regular_shape(int number_of_sides, int w, int h, int radius){
   }
   shape->num_points = number_of_sides;
   shape->points = points;
-  free(points);
-  return shape;  
+  return shape;
+}
+
+static void draw_and_destroy_shape(GContext *gContext, GPathInfo *shape) {
+  if (shape == NULL) {
+    return;
+  }
+
+  GPath *path = gpath_create(shape);
+  if (path != NULL) {
+    gpath_draw_filled(gContext, path);
+    gpath_destroy(path);
+  }
+
+  free((void *)shape->points);
+  free(shape);
+}
+
+static int layout_value(int value) {
+#ifdef PBL_PLATFORM_GABBRO
+  return (value * 13 + 4) / 9;
+#else
+  return value;
+#endif
+}
+
+static GPoint layout_point(GPoint point) {
+  return GPoint(layout_value(point.x), layout_value(point.y));
 }
 
 void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
+  currentWidth = layout_value(currentWidth);
+  currentHeight = layout_value(currentHeight);
+
   int numberOfSides = 0;
   int border = 0;
   switch(shape){
     case 11:   // star
       numberOfSides = 5;
       graphics_context_set_fill_color(gContext, strokeColor);
-      gpath_draw_filled(gContext, gpath_create(draw_star(numberOfSides, currentWidth, currentHeight, 12)));
+      draw_and_destroy_shape(gContext, draw_star(numberOfSides, currentWidth, currentHeight, layout_value(12)));
       graphics_context_set_fill_color(gContext, fillColor);
-      gpath_draw_filled(gContext, gpath_create(draw_star(numberOfSides, currentWidth, currentHeight, 8)));
+      draw_and_destroy_shape(gContext, draw_star(numberOfSides, currentWidth, currentHeight, layout_value(8)));
       break;
     case 3:
     case 6:
@@ -93,79 +122,100 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
         case 9: numberOfSides = 7; border = 2; break;
         case 10: numberOfSides = 8; border = 2; break;
       }
-      #ifndef PBL_PLATFORM_CHALK
+      #if !defined(PBL_PLATFORM_CHALK) && !defined(PBL_PLATFORM_GABBRO)
         currentHeight += 2;
       #endif
       graphics_context_set_fill_color(gContext, strokeColor);
-      gpath_draw_filled(gContext, gpath_create(draw_regular_shape(numberOfSides, currentWidth, currentHeight, 10)));
+      draw_and_destroy_shape(gContext, draw_regular_shape(numberOfSides, currentWidth, currentHeight, layout_value(10)));
       graphics_context_set_fill_color(gContext, fillColor);
-      gpath_draw_filled(gContext, gpath_create(draw_regular_shape(numberOfSides, currentWidth, currentHeight, 10-border)));
-      break;        
+      draw_and_destroy_shape(gContext, draw_regular_shape(numberOfSides, currentWidth, currentHeight, layout_value(10-border)));
+      break;
     case 5:     // cross
       graphics_context_set_fill_color(gContext, strokeColor);
       int w = currentWidth;
       int h = currentHeight;
       gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=13, .points=(GPoint []){
-        {w-10, h-2}, 
-        {w-5 , h-3}, 
-        {w-5 , h-8}, 
-        {w+5 , h-8}, 
-        {w+5 , h-3}, 
-        {w+10, h-3}, 
-        {w+10, h+6}, 
-        {w+5 , h+6}, 
-        {w+5 , h+11}, 
-        {w-5 , h+11}, 
-        {w-5 , h+7}, 
-        {w-10, h+7},
-        {w-10, h-2}
+        {w-layout_value(10), h-layout_value(2)},
+        {w-layout_value(5) , h-layout_value(3)},
+        {w-layout_value(5) , h-layout_value(8)},
+        {w+layout_value(5) , h-layout_value(8)},
+        {w+layout_value(5) , h-layout_value(3)},
+        {w+layout_value(10), h-layout_value(3)},
+        {w+layout_value(10), h+layout_value(6)},
+        {w+layout_value(5) , h+layout_value(6)},
+        {w+layout_value(5) , h+layout_value(11)},
+        {w-layout_value(5) , h+layout_value(11)},
+        {w-layout_value(5) , h+layout_value(7)},
+        {w-layout_value(10), h+layout_value(7)},
+        {w-layout_value(10), h-layout_value(2)}
       }}));
       graphics_context_set_fill_color(gContext, fillColor);
       gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=13, .points=(GPoint []){
-        {w-8, h}, 
-        {w-3, h-1}, 
-        {w-3, h-6}, 
-        {w+3, h-6}, 
-        {w+3, h-1}, 
-        {w+8, h-1}, 
-        {w+8, h+4}, 
-        {w+3, h+4}, 
-        {w+3, h+9}, 
-        {w-3, h+9}, 
-        {w-3, h+5}, 
-        {w-8, h+5}, 
-        {w-8, h-1}
+        {w-layout_value(8), h},
+        {w-layout_value(3), h-layout_value(1)},
+        {w-layout_value(3), h-layout_value(6)},
+        {w+layout_value(3), h-layout_value(6)},
+        {w+layout_value(3), h-layout_value(1)},
+        {w+layout_value(8), h-layout_value(1)},
+        {w+layout_value(8), h+layout_value(4)},
+        {w+layout_value(3), h+layout_value(4)},
+        {w+layout_value(3), h+layout_value(9)},
+        {w-layout_value(3), h+layout_value(9)},
+        {w-layout_value(3), h+layout_value(5)},
+        {w-layout_value(8), h+layout_value(5)},
+        {w-layout_value(8), h-layout_value(1)}
       }}));
       break;
     case 4:     // triangle
       graphics_context_set_fill_color(gContext, strokeColor);
-      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-11}, {currentWidth+9, currentHeight+8}, {currentWidth-8, currentHeight+8}}}));
+      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-layout_value(11)}, {currentWidth+layout_value(9), currentHeight+layout_value(8)}, {currentWidth-layout_value(8), currentHeight+layout_value(8)}}}));
       graphics_context_set_fill_color(gContext, fillColor);
-      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-7}, {currentWidth+6, currentHeight+6}, {currentWidth-5, currentHeight+6}}}));
+      gpath_draw_filled(gContext, gpath_create(&(GPathInfo){.num_points=3, .points=(GPoint []){{currentWidth, currentHeight-layout_value(7)}, {currentWidth+layout_value(6), currentHeight+layout_value(6)}, {currentWidth-layout_value(5), currentHeight+layout_value(6)}}}));
       break;
     case 2:     // rectangle
       graphics_context_set_fill_color(gContext, fillColor);
       graphics_context_set_stroke_color(gContext, strokeColor);
-      graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}}, 0, GCornerNone);
-      graphics_draw_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-7}, .size={12,19}});
-      graphics_draw_rect(gContext, (GRect){.origin={currentWidth-5, currentHeight-6}, .size={10,17}});          
+      graphics_fill_rect(gContext, (GRect){.origin={currentWidth-layout_value(6), currentHeight-layout_value(7)}, .size={layout_value(12),layout_value(19)}}, 0, GCornerNone);
+      graphics_draw_rect(gContext, (GRect){.origin={currentWidth-layout_value(6), currentHeight-layout_value(7)}, .size={layout_value(12),layout_value(19)}});
+      graphics_draw_rect(gContext, (GRect){.origin={currentWidth-layout_value(5), currentHeight-layout_value(6)}, .size={layout_value(10),layout_value(17)}});
       break;
     case 1:     // square
       graphics_context_set_fill_color(gContext, strokeColor);
-      graphics_fill_rect(gContext, (GRect){.origin={currentWidth-8, currentHeight-6}, .size={16,16}}, 0, GCornerNone);
+      graphics_fill_rect(gContext, (GRect){.origin={currentWidth-layout_value(8), currentHeight-layout_value(6)}, .size={layout_value(16),layout_value(16)}}, 0, GCornerNone);
       graphics_context_set_fill_color(gContext, fillColor);
-      graphics_fill_rect(gContext, (GRect){.origin={currentWidth-6, currentHeight-4}, .size={12,12}}, 0, GCornerNone);
+      graphics_fill_rect(gContext, (GRect){.origin={currentWidth-layout_value(6), currentHeight-layout_value(4)}, .size={layout_value(12),layout_value(12)}}, 0, GCornerNone);
       break;
     case 0:
     default:    // disk
       graphics_context_set_fill_color(gContext, strokeColor);
-      graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 8);
+      graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), layout_value(8));
       graphics_context_set_fill_color(gContext, fillColor);
-      graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), 6);
+      graphics_fill_circle(gContext, GPoint(currentWidth, currentHeight), layout_value(6));
       break;
   }
 }
 
+// Gabbro's 260px round display uses the Chalk layout as its design canvas.
+// Scale that 180px canvas at the drawing boundary so every digit keeps the
+// same relative size and position.
+static GRect layout_rect(GRect rect) {
+#ifdef PBL_PLATFORM_GABBRO
+  return GRect(layout_value(rect.origin.x),
+               layout_value(rect.origin.y),
+               layout_value(rect.size.w),
+               layout_value(rect.size.h));
+#else
+  return rect;
+#endif
+}
+
+static void fill_number_rect(GContext *gContext, GRect rect,
+                             uint16_t corner_radius, GCornerMask corner_mask) {
+  graphics_fill_rect(gContext, layout_rect(rect), corner_radius, corner_mask);
+}
+
+#define graphics_fill_rect(context, rect, radius, mask) \
+  fill_number_rect(context, rect, radius, mask)
 void fill_number(int number, GPoint position, GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
@@ -236,10 +286,11 @@ void fill_number(int number, GPoint position, GContext *gContext){
       break;
   }
 }
+#undef graphics_fill_rect
 
 void draw_number(int number, GPoint position, GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   switch(number){
     case 0:
       graphics_draw_line(gContext, GPoint(position.x +  0, position.y +  0), GPoint(position.x + 60, position.y +  0));
@@ -275,7 +326,7 @@ void draw_number(int number, GPoint position, GContext *gContext){
       graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 36), GPoint(position.x + 46, position.y + 36));
       graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 36), GPoint(position.x + 46, position.y + 14));
       graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 14), GPoint(position.x +  0, position.y + 14));
-      graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 14), GPoint(position.x +  0, position.y +  0)); 
+      graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 14), GPoint(position.x +  0, position.y +  0));
       break;
     case 3:
       graphics_draw_line(gContext, GPoint(position.x +  0, position.y +  0), GPoint(position.x + 60, position.y +  0));
@@ -328,7 +379,7 @@ void draw_number(int number, GPoint position, GContext *gContext){
       graphics_draw_line(gContext, GPoint(position.x + 60, position.y + 36), GPoint(position.x + 60, position.y + 90));
       graphics_draw_line(gContext, GPoint(position.x + 60, position.y + 90), GPoint(position.x +  0, position.y + 90));
       graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 90), GPoint(position.x +  0, position.y +  0));
-      graphics_draw_line(gContext, GPoint(position.x + 14, position.y + 52), GPoint(position.x + 46, position.y + 52));  
+      graphics_draw_line(gContext, GPoint(position.x + 14, position.y + 52), GPoint(position.x + 46, position.y + 52));
       graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 52), GPoint(position.x + 46, position.y + 74));
       graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 74), GPoint(position.x + 14, position.y + 74));
       graphics_draw_line(gContext, GPoint(position.x + 14, position.y + 74), GPoint(position.x + 14, position.y + 52));
@@ -358,18 +409,18 @@ void draw_number(int number, GPoint position, GContext *gContext){
       graphics_draw_line(gContext, GPoint(position.x + 14, position.y + 74), GPoint(position.x + 14, position.y + 54));
       break;
     case 9:
-      graphics_draw_line(gContext, GPoint(position.x +  0, position.y +  0), GPoint(position.x + 60, position.y +  0));
-      graphics_draw_line(gContext, GPoint(position.x + 60, position.y +  0), GPoint(position.x + 60, position.y + 90));
-      graphics_draw_line(gContext, GPoint(position.x + 60, position.y + 90), GPoint(position.x +  0, position.y + 90));
-      graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 90), GPoint(position.x +  0, position.y + 76));
-      graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 76), GPoint(position.x + 46, position.y + 76));
-      graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 76), GPoint(position.x + 46, position.y + 54));
-      graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 54), GPoint(position.x +  0, position.y + 54));
-      graphics_draw_line(gContext, GPoint(position.x +  0, position.y + 54), GPoint(position.x +  0, position.y +  0));
-      graphics_draw_line(gContext, GPoint(position.x + 14, position.y + 14), GPoint(position.x + 46, position.y + 14));
-      graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 14), GPoint(position.x + 46, position.y + 36));
-      graphics_draw_line(gContext, GPoint(position.x + 46, position.y + 36), GPoint(position.x + 14, position.y + 36));
-      graphics_draw_line(gContext, GPoint(position.x + 14, position.y + 36), GPoint(position.x + 14, position.y + 14));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x +  0, position.y +  0)), layout_point(GPoint(position.x + 60, position.y +  0)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 60, position.y +  0)), layout_point(GPoint(position.x + 60, position.y + 90)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 60, position.y + 90)), layout_point(GPoint(position.x +  0, position.y + 90)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x +  0, position.y + 90)), layout_point(GPoint(position.x +  0, position.y + 76)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x +  0, position.y + 76)), layout_point(GPoint(position.x + 46, position.y + 76)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 46, position.y + 76)), layout_point(GPoint(position.x + 46, position.y + 54)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 46, position.y + 54)), layout_point(GPoint(position.x +  0, position.y + 54)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x +  0, position.y + 54)), layout_point(GPoint(position.x +  0, position.y +  0)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 14, position.y + 14)), layout_point(GPoint(position.x + 46, position.y + 14)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 46, position.y + 14)), layout_point(GPoint(position.x + 46, position.y + 36)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 46, position.y + 36)), layout_point(GPoint(position.x + 14, position.y + 36)));
+      graphics_draw_line(gContext, layout_point(GPoint(position.x + 14, position.y + 36)), layout_point(GPoint(position.x + 14, position.y + 14)));
       break;
   }
 }
@@ -382,7 +433,7 @@ static GRect screen_bounds(void) {
 // Emery is larger than the original 144x168 rectangular canvas.  Keep the
 // established composition intact there, but centre it on the larger display.
 static GPoint content_offset(void) {
-#if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_EMERY)
   GRect bounds = screen_bounds();
   return GPoint((bounds.size.w - 144) / 2, (bounds.size.h - 168) / 2);
 #else
@@ -392,12 +443,12 @@ static GPoint content_offset(void) {
 
 void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask corner_mask, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   GRect rect = screen_bounds();
   graphics_context_set_fill_color(gContext, palette.background);
   graphics_fill_rect(gContext, rect, corner_radius, corner_mask);
-  #ifdef PBL_PLATFORM_CHALK
-    GRect base = GRect(0, 165, 180, 20);
+  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    GRect base = layout_rect(GRect(0, 165, 180, 20));
     graphics_context_set_fill_color(gContext, palette.fillDot);
     graphics_fill_rect(gContext, base, 0, GCornerNone);
   #endif
@@ -412,13 +463,13 @@ void draw_time_background(GContext *gContext, Color palette){
     draw_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
     draw_number(hour%10, (GPoint){72, -6}, gContext);
     draw_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
-    draw_number(minute%10, (GPoint){72, 84}, gContext);      
-  #elif PBL_PLATFORM_CHALK
+    draw_number(minute%10, (GPoint){72, 84}, gContext);
+  #elif defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
     graphics_context_set_fill_color(gContext, palette.time);
     fill_number((hour-(hour%10))/10, (GPoint){30, -6}, gContext);
     fill_number(hour%10, (GPoint){92, -6}, gContext);
     fill_number((minute-(minute%10))/10, (GPoint){30, 84}, gContext);
-    fill_number(minute%10, (GPoint){92, 84}, gContext);      
+    fill_number(minute%10, (GPoint){92, 84}, gContext);
   #else
     GPoint offset = content_offset();
     graphics_context_set_fill_color(gContext, palette.time);
@@ -427,8 +478,8 @@ void draw_time_background(GContext *gContext, Color palette){
     fill_number((minute-(minute%10))/10, (GPoint){10 + offset.x, 84 + offset.y}, gContext);
     fill_number(minute%10, (GPoint){72 + offset.x, 84 + offset.y}, gContext);
   #endif
-  #ifdef PBL_PLATFORM_CHALK
-    GRect base = GRect(0, 165, 180, 20);
+  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    GRect base = layout_rect(GRect(0, 165, 180, 20));
     graphics_context_set_fill_color(gContext, palette.fillDot);
     graphics_fill_rect(gContext, base, 0, GCornerNone);
   #endif
@@ -436,11 +487,11 @@ void draw_time_background(GContext *gContext, Color palette){
 
 void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   int currentWidth, currentHeight;
   int widthSingleLayer;
 
-  #ifdef PBL_PLATFORM_CHALK
+  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
     s_layerRect[0] = (GRect){.origin={20, 45}, .size={104, 24}};
     s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
   #else
@@ -475,11 +526,11 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
       // Very simple define of height
       currentHeight = s_layerRect[j].origin.y + 24;
       // Chalk platform correction
-      #ifdef PBL_PLATFORM_CHALK
+      #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
         currentWidth += 20;
         currentHeight += 10;
       #endif
-    
+
       // Draws the dots
       GColor strokeColor, fillColor;
       strokeColor = palette.strokeDot;
@@ -489,26 +540,30 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
         fillColor = palette.background;
       }
       draw_shape(shape, currentWidth, currentHeight, gContext, strokeColor, fillColor);
-  
+
       // Prints texts
       currentHeight = s_layerRect[j].origin.y;
-      #ifdef PBL_PLATFORM_CHALK
+      #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
         currentHeight += 7;
         if(j == 1){
           currentHeight += 36;
         }
       #endif
-      
+
       graphics_context_set_text_color(gContext, palette.text);
       if(drawNumbers == true){
-        graphics_draw_text(gContext, 
-                           s_textBase[i], 
-                           fonts_get_system_font(FONT_KEY_GOTHIC_14),
-                           (GRect){.origin={currentWidth-8, currentHeight}, .size={16, 18}}, 
+        GFont help_number_font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
+        #ifdef PBL_PLATFORM_GABBRO
+          help_number_font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+        #endif
+        graphics_draw_text(gContext,
+                           s_textBase[i],
+                           help_number_font,
+                           layout_rect((GRect){.origin={currentWidth-8, currentHeight}, .size={16, 18}}),
                            GTextOverflowModeWordWrap,
                            GTextAlignmentCenter,
                            NULL
-                          );        
+                          );
       }
     }
   }
@@ -516,12 +571,17 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
 
 void draw_bluetooth(GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
     if(bt_bitmap_off == NULL)
       bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_OFF_IMG);
     if(bt_bitmap_on == NULL)
       bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_ON_IMG);
+  #elif defined(PBL_PLATFORM_GABBRO)
+    if(bt_bitmap_off == NULL)
+      bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_GABBRO_OFF_IMG);
+    if(bt_bitmap_on == NULL)
+      bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_GABBRO_ON_IMG);
   #else
     if(bt_bitmap_off == NULL)
       bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_OFF_IMG);
@@ -544,19 +604,19 @@ void draw_bluetooth(GContext *gContext){
       }
     #elif PBL_PLATFORM_BASALT
       y = 6;
-    #elif PBL_PLATFORM_CHALK
+    #elif defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       x = 85;
       y = 140;
       if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
         x -= 20;
       }
     #endif
-    #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    #if defined(PBL_PLATFORM_EMERY)
       GPoint offset = content_offset();
       x += offset.x;
       y += offset.y;
     #endif
-    GRect rect = GRect(x, y, w, h);
+    GRect rect = layout_rect(GRect(x, y, w, h));
     #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
       graphics_context_set_compositing_mode(gContext, GCompOpOr);
     #else
@@ -574,7 +634,7 @@ void draw_bluetooth(GContext *gContext){
           graphics_draw_bitmap_in_rect(gContext, bt_bitmap_off, rect);
         }else{
           graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
-        }        
+        }
       }
     #endif
   }
@@ -582,7 +642,7 @@ void draw_bluetooth(GContext *gContext){
 
 void draw_battery(GContext *gContext, int battery, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   if(battery != BA_NEVER){
     GColor batteryColor;
       #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
@@ -592,7 +652,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
         if(isEasterEggDay()){
           batteryColor = palette.text;
         }else{
-          batteryColor = GColorRed; 
+          batteryColor = GColorRed;
         }
       }else{
         batteryColor = palette.text;
@@ -600,28 +660,32 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     #endif
     graphics_context_set_fill_color(gContext, batteryColor);
     graphics_context_set_stroke_color(gContext, batteryColor);
-    graphics_context_set_text_color(gContext, batteryColor);        
+    graphics_context_set_text_color(gContext, batteryColor);
   }
 
   if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
     int x, y;
-    #ifdef PBL_PLATFORM_CHALK
+    #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       x = 80;
-      y = 142;      
+      y = 142;
     #else
       x = 115;
       y = 7;
     #endif
-    #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    #if defined(PBL_PLATFORM_EMERY)
       GPoint offset = content_offset();
       x += offset.x;
       y += offset.y;
     #endif
     // if i display bluetooth image too, battery sign must shift right
-    #ifdef PBL_PLATFORM_CHALK
+    #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
         x += 20;
       }
+    #endif
+    #ifdef PBL_PLATFORM_GABBRO
+      x = layout_value(x);
+      y = layout_value(y);
     #endif
     if(battery_modality == 0){
       graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={23,13}});
@@ -643,17 +707,17 @@ void draw_battery(GContext *gContext, int battery, Color palette){
         x -= 2;
         y -= 3;
       #else
-        GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);    
+        GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
       #endif
       snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_level);
-      graphics_draw_text(gContext, 
-                         battery_buffer, 
+      graphics_draw_text(gContext,
+                         battery_buffer,
                          font,
-                         (GRect){.origin={x, y}, .size={30, 10}}, 
+                         (GRect){.origin={x, y}, .size={30, 10}},
                          GTextOverflowModeFill,
                          GTextAlignmentCenter,
                          NULL
-                        ); 
+                        );
     }
   }
 }
@@ -666,7 +730,7 @@ void draw_date(GContext *gContext, Color palette){
   int y;
   int w;
   int h = (date > 28 && !isEasterEggDay()) ? 120 : 136;
-  #ifdef PBL_PLATFORM_CHALK
+  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
     x = 24;
     y = (date > 28) ? 5 : 20;
     w = 132;
@@ -675,12 +739,12 @@ void draw_date(GContext *gContext, Color palette){
     y = (date > 28 && !isEasterEggDay()) ? 120 : 136;
     w = 144;
   #endif
-  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+  #if defined(PBL_PLATFORM_EMERY)
     GPoint offset = content_offset();
     x += offset.x;
     y += offset.y;
   #endif
-  GRect rect = GRect(x, y, w, h);
+  GRect rect = layout_rect(GRect(x, y, w, h));
   int esternEgg = isEasterEggDay();
   if(esternEgg != 0){
     if(esternEgg == 1){
@@ -693,23 +757,27 @@ void draw_date(GContext *gContext, Color palette){
   // graphics_context_set_text_color(gContext, GColorWhite);
   // snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
   //////////////////////////////////////////////////////////////////
+  GFont date_font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  #ifdef PBL_PLATFORM_GABBRO
+    date_font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
+  #endif
   graphics_context_set_text_color(gContext, palette.text);
-  graphics_draw_text(gContext, 
+  graphics_draw_text(gContext,
                      date_buffer,
-                     fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
-                     rect, 
+                     date_font,
+                     rect,
                      GTextOverflowModeWordWrap,
                      GTextAlignmentCenter,
                      NULL
-                    );    
+                    );
 }
 
 void get_date_format(int dateKey){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   time_t rawtime;
   struct tm *info;
-  
+
   time(&rawtime);
   info = localtime(&rawtime);
   switch(dateKey){
@@ -888,7 +956,7 @@ void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake){
 
 void shake_flakes(struct Flake *flakes){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
+
   int x, y, size;
   GRect bounds = screen_bounds();
   int windowWidth = bounds.size.w;

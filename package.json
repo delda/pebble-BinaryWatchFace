@@ -1,7 +1,7 @@
 {
   "name": "binary-watchface",
   "author": "delda@virgilio.it",
-  "version": "3.6.0",
+  "version": "4.0.0",
   "private": true,
   "keywords": [
     "pebble-app"
@@ -60,8 +60,12 @@
             "basalt",
             "chalk",
             "diorite",
+<<<<<<< HEAD
             "emery",
             "gabbro"
+=======
+            "emery"
+>>>>>>> 5d77168 (From external html page configuration to clay for pebble)
           ],
           "type": "bitmap"
         },
@@ -72,7 +76,22 @@
             "basalt",
             "chalk",
             "diorite",
-            "emery",
+            "emery"
+          ],
+          "type": "bitmap"
+        },
+        {
+          "file": "images/Bluetooth_off_14x23.png",
+          "name": "BLUETOOTH_GABBRO_OFF_IMG",
+          "targetPlatforms": [
+            "gabbro"
+          ],
+          "type": "bitmap"
+        },
+        {
+          "file": "images/Bluetooth_14x23.png",
+          "name": "BLUETOOTH_GABBRO_ON_IMG",
+          "targetPlatforms": [
             "gabbro"
           ],
           "type": "bitmap"
