@@ -83,19 +83,32 @@ static void draw_and_destroy_shape(GContext *gContext, GPathInfo *shape) {
 static int layout_value(int value) {
 #ifdef PBL_PLATFORM_GABBRO
   return (value * 13 + 4) / 9;
+#elif defined(PBL_PLATFORM_EMERY)
+  // Emery is 228px tall, versus Basalt's 168px design canvas.  Use one
+  // uniform ratio so the clock's geometry is enlarged without distortion.
+  return (value * 19 + 7) / 14;
 #else
   return value;
 #endif
 }
 
+static int layout_x(int value) {
+#ifdef PBL_PLATFORM_EMERY
+  // Centring the 195px-wide scaled canvas leaves a balanced 2px margin.
+  return layout_value(value) + 2;
+#else
+  return layout_value(value);
+#endif
+}
+
 static GPoint layout_point(GPoint point) {
-  return GPoint(layout_value(point.x), layout_value(point.y));
+  return GPoint(layout_x(point.x), layout_value(point.y));
 }
 
 void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  currentWidth = layout_value(currentWidth);
+  currentWidth = layout_x(currentWidth);
   currentHeight = layout_value(currentHeight);
 
   int numberOfSides = 0;
@@ -195,12 +208,11 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
   }
 }
 
-// Gabbro's 260px round display uses the Chalk layout as its design canvas.
-// Scale that 180px canvas at the drawing boundary so every digit keeps the
-// same relative size and position.
+// Gabbro and Emery scale their respective reference layouts at the drawing
+// boundary, keeping every element in the same visual relationship.
 static GRect layout_rect(GRect rect) {
-#ifdef PBL_PLATFORM_GABBRO
-  return GRect(layout_value(rect.origin.x),
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
+  return GRect(layout_x(rect.origin.x),
                layout_value(rect.origin.y),
                layout_value(rect.size.w),
                layout_value(rect.size.h));
@@ -430,17 +442,6 @@ static GRect screen_bounds(void) {
   return layer_get_bounds(window_get_root_layer(window));
 }
 
-// Emery is larger than the original 144x168 rectangular canvas.  Keep the
-// established composition intact there, but centre it on the larger display.
-static GPoint content_offset(void) {
-#if defined(PBL_PLATFORM_EMERY)
-  GRect bounds = screen_bounds();
-  return GPoint((bounds.size.w - 144) / 2, (bounds.size.h - 168) / 2);
-#else
-  return GPointZero;
-#endif
-}
-
 void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask corner_mask, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
@@ -471,12 +472,11 @@ void draw_time_background(GContext *gContext, Color palette){
     fill_number((minute-(minute%10))/10, (GPoint){30, 84}, gContext);
     fill_number(minute%10, (GPoint){92, 84}, gContext);
   #else
-    GPoint offset = content_offset();
     graphics_context_set_fill_color(gContext, palette.time);
-    fill_number((hour-(hour%10))/10, (GPoint){10 + offset.x, -6 + offset.y}, gContext);
-    fill_number(hour%10, (GPoint){72 + offset.x, -6 + offset.y}, gContext);
-    fill_number((minute-(minute%10))/10, (GPoint){10 + offset.x, 84 + offset.y}, gContext);
-    fill_number(minute%10, (GPoint){72 + offset.x, 84 + offset.y}, gContext);
+    fill_number((hour-(hour%10))/10, (GPoint){10, -6}, gContext);
+    fill_number(hour%10, (GPoint){72, -6}, gContext);
+    fill_number((minute-(minute%10))/10, (GPoint){10, 84}, gContext);
+    fill_number(minute%10, (GPoint){72, 84}, gContext);
   #endif
   #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
     GRect base = layout_rect(GRect(0, 165, 180, 20));
@@ -495,12 +495,11 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
     s_layerRect[0] = (GRect){.origin={20, 45}, .size={104, 24}};
     s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
   #else
-    GPoint offset = content_offset();
-    s_layerRect[0] = (GRect){.origin={20 + offset.x, 30 + offset.y}, .size={104, 24}};
+    s_layerRect[0] = (GRect){.origin={20, 30}, .size={104, 24}};
     if(drawNumbers == true){
-      s_layerRect[1] = (GRect){.origin={20 + offset.x, 70 + offset.y}, .size={104, 24}};
+      s_layerRect[1] = (GRect){.origin={20, 70}, .size={104, 24}};
     }else{
-      s_layerRect[1] = (GRect){.origin={20 + offset.x, 60 + offset.y}, .size={104, 24}};
+      s_layerRect[1] = (GRect){.origin={20, 60}, .size={104, 24}};
     }
   #endif
 
@@ -556,6 +555,9 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
         #ifdef PBL_PLATFORM_GABBRO
           help_number_font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
         #endif
+        #ifdef PBL_PLATFORM_EMERY
+          help_number_font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+        #endif
         graphics_draw_text(gContext,
                            s_textBase[i],
                            help_number_font,
@@ -577,7 +579,7 @@ void draw_bluetooth(GContext *gContext){
       bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_OFF_IMG);
     if(bt_bitmap_on == NULL)
       bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_ON_IMG);
-  #elif defined(PBL_PLATFORM_GABBRO)
+  #elif defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
     if(bt_bitmap_off == NULL)
       bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_GABBRO_OFF_IMG);
     if(bt_bitmap_on == NULL)
@@ -604,17 +606,16 @@ void draw_bluetooth(GContext *gContext){
       }
     #elif PBL_PLATFORM_BASALT
       y = 6;
+    #elif defined(PBL_PLATFORM_EMERY)
+      // Emery's scaled destination is 14x23px.  Use the matching bitmap:
+      // drawing the 10x15px asset in this larger rect makes Pebble tile it.
+      h = 17;
     #elif defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       x = 85;
       y = 140;
       if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
         x -= 20;
       }
-    #endif
-    #if defined(PBL_PLATFORM_EMERY)
-      GPoint offset = content_offset();
-      x += offset.x;
-      y += offset.y;
     #endif
     GRect rect = layout_rect(GRect(x, y, w, h));
     #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
@@ -672,40 +673,57 @@ void draw_battery(GContext *gContext, int battery, Color palette){
       x = 115;
       y = 7;
     #endif
-    #if defined(PBL_PLATFORM_EMERY)
-      GPoint offset = content_offset();
-      x += offset.x;
-      y += offset.y;
-    #endif
     // if i display bluetooth image too, battery sign must shift right
     #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
         x += 20;
       }
     #endif
-    #ifdef PBL_PLATFORM_GABBRO
-      x = layout_value(x);
+    #if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
+      x = layout_x(x);
       y = layout_value(y);
     #endif
     if(battery_modality == 0){
-      graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={23,13}});
-      graphics_draw_line(gContext, (GPoint){.x=x+2*11+1, .y=y+4}, (GPoint){.x=x+2*11+1, .y=y+9});
+      int battery_width = layout_value(23);
+      #ifdef PBL_PLATFORM_EMERY
+        battery_width -= 1;
+      #endif
+      graphics_draw_rect(gContext,
+                         GRect(x, y, battery_width, layout_value(13)));
+      graphics_draw_line(gContext, GPoint(x + battery_width, y + layout_value(4)), GPoint(x + battery_width, y + layout_value(9)));
 
-      for(int z=1; z<=battery_level/10; z++){
-        graphics_draw_line(gContext, (GPoint){.x=x+2*z, .y=y+2}, (GPoint){.x=x+2*z, .y=y+10});
+      int battery_blocks = battery_level / 10;
+      #ifdef PBL_PLATFORM_EMERY
+        battery_blocks = battery_blocks > 9 ? 9 : battery_blocks;
+      #endif
+      for(int z=1; z<=battery_blocks; z++){
+        #ifdef PBL_PLATFORM_EMERY
+          graphics_fill_rect(gContext,
+                             GRect(x + 2 + (z - 1) * 3, y + layout_value(2),
+                                   2, layout_value(10) - layout_value(2) + 1),
+                             0, GCornerNone);
+        #else
+        graphics_draw_line(gContext, GPoint(x + layout_value(2*z), y + layout_value(2)), GPoint(x + layout_value(2*z), y + layout_value(10)));
+        #endif
       }
       if(battery_level < BA_PERCENT_WARNING){
-        graphics_fill_rect(gContext, GRect(x+10, y+2, 4, 4), 0, GCornerNone);
-        graphics_fill_rect(gContext, GRect(x+11, y+6, 2, 2), 0, GCornerNone);
-        graphics_fill_rect(gContext, GRect(x+11, y+9, 2, 2), 0, GCornerNone);
+        graphics_fill_rect(gContext, GRect(x + layout_value(10), y + layout_value(2), layout_value(4), layout_value(4)), 0, GCornerNone);
+        graphics_fill_rect(gContext, GRect(x + layout_value(11), y + layout_value(6), layout_value(2), layout_value(2)), 0, GCornerNone);
+        graphics_fill_rect(gContext, GRect(x + layout_value(11), y + layout_value(9), layout_value(2), layout_value(2)), 0, GCornerNone);
       }
     }else{
       #ifndef PBL_PLATFORM_CHALK
         GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-        graphics_draw_rect(gContext, (GRect){.origin={x, y}, .size={24,13}});
-        graphics_draw_line(gContext, (GPoint){.x=x+24, .y=y+4}, (GPoint){.x=x+24, .y=y+9});
-        x -= 2;
-        y -= 3;
+        #ifdef PBL_PLATFORM_EMERY
+          font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+        #endif
+        graphics_draw_rect(gContext,
+                           GRect(x, y, layout_value(24), layout_value(13)));
+        graphics_draw_line(gContext,
+                           GPoint(x + layout_value(24), y + layout_value(4)),
+                           GPoint(x + layout_value(24), y + layout_value(9)));
+        x -= layout_value(2);
+        y -= layout_value(3);
       #else
         GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
       #endif
@@ -713,7 +731,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
       graphics_draw_text(gContext,
                          battery_buffer,
                          font,
-                         (GRect){.origin={x, y}, .size={30, 10}},
+                         GRect(x, y, layout_value(30), layout_value(10)),
                          GTextOverflowModeFill,
                          GTextAlignmentCenter,
                          NULL
@@ -739,11 +757,6 @@ void draw_date(GContext *gContext, Color palette){
     y = (date > 28 && !isEasterEggDay()) ? 120 : 136;
     w = 144;
   #endif
-  #if defined(PBL_PLATFORM_EMERY)
-    GPoint offset = content_offset();
-    x += offset.x;
-    y += offset.y;
-  #endif
   GRect rect = layout_rect(GRect(x, y, w, h));
   int esternEgg = isEasterEggDay();
   if(esternEgg != 0){
@@ -760,6 +773,9 @@ void draw_date(GContext *gContext, Color palette){
   GFont date_font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
   #ifdef PBL_PLATFORM_GABBRO
     date_font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
+  #endif
+  #ifdef PBL_PLATFORM_EMERY
+    date_font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   #endif
   graphics_context_set_text_color(gContext, palette.text);
   graphics_draw_text(gContext,

@@ -16,9 +16,7 @@
       "basalt",
       "chalk",
       "diorite",
-      "emery",
-      "flint",
-      "gabbro"
+      "emery"
     ],
     "enableMultiJS": true,
     "capabilities": [
@@ -60,12 +58,7 @@
             "basalt",
             "chalk",
             "diorite",
-<<<<<<< HEAD
-            "emery",
-            "gabbro"
-=======
             "emery"
->>>>>>> 5d77168 (From external html page configuration to clay for pebble)
           ],
           "type": "bitmap"
         },
@@ -84,7 +77,8 @@
           "file": "images/Bluetooth_off_14x23.png",
           "name": "BLUETOOTH_GABBRO_OFF_IMG",
           "targetPlatforms": [
-            "gabbro"
+            "gabbro",
+            "emery"
           ],
           "type": "bitmap"
         },
@@ -92,7 +86,8 @@
           "file": "images/Bluetooth_14x23.png",
           "name": "BLUETOOTH_GABBRO_ON_IMG",
           "targetPlatforms": [
-            "gabbro"
+            "gabbro",
+            "emery"
           ],
           "type": "bitmap"
         },
