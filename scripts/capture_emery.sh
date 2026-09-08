@@ -9,7 +9,11 @@ frames_dir="$output_dir/frames"
 app_uuid="1d23d5b6-ee9c-49a6-8f6e-efc6a7335c77"
 time_settle_seconds="${TIME_SETTLE_SECONDS:-2}"
 # 1 January 2030, 10:00:00 UTC (also CET in January).
-capture_timestamp=1893492000
+#capture_timestamp=1893492000
+# Fri Dec 25 2026 08:45:00 UTC (09:45 CET)
+#capture_timestamp=1788815400
+# 25 dicembre 2026, ore 09:45 CET
+capture_timestamp=1798188300
 emulator_logs_pid=""
 emulator_logs_file=""
 
@@ -92,14 +96,38 @@ capture() {
   echo "Captured $frame"
 }
 
-capture 01 circle-light-minimal       0 2 0 0 0 0 0
-capture 02 circle-light-bit-values    0 2 0 1 0 0 0
-capture 03 circle-light-bluetooth     0 2 0 1 2 0 0
-capture 04 circle-light-battery       0 2 0 1 2 2 0
-capture 05 circle-light-date          0 2 0 1 2 2 23
-capture 06 circle-light-digits        0 2 1 1 2 2 23
-capture 07 square-light-digits        1 2 1 1 2 2 23
-capture 08 square-dark                1 4 1 1 2 2 23
+### generico
+#capture 01 circle-light-minimal       0 2 0 0 0 0 0
+#capture 02 circle-light-bit-values    0 2 0 1 0 0 0
+#capture 03 circle-light-bluetooth     0 2 0 1 2 0 0
+#capture 04 circle-light-battery       0 2 0 1 2 2 0
+#capture 05 circle-light-date          0 2 0 1 2 2 23
+#capture 06 circle-light-digits        0 2 1 1 2 2 23
+#capture 07 square-light-digits        1 2 1 1 2 2 23
+#capture 08 square-dark                1 4 1 1 2 2 23
+
+### tutte le figure
+#capture 00 circle-light-minimal        0 4 0 1 2 2 23
+#capture 01 circle-light-minimal        1 4 0 1 2 2 23
+#capture 02 circle-light-minimal        2 4 0 1 2 2 23
+#capture 03 circle-light-minimal        3 4 0 1 2 2 23
+#capture 04 circle-light-minimal        4 4 0 1 2 2 23
+#capture 05 circle-light-minimal        5 4 0 1 2 2 23
+#capture 06 circle-light-minimal        6 4 0 1 2 2 23
+#capture 07 circle-light-minimal        7 4 0 1 2 2 23
+#capture 08 circle-light-minimal        8 4 0 1 2 2 23
+#capture 09 circle-light-minimal        9 4 0 1 2 2 23
+#capture 10 circle-light-minimal       10 4 0 1 2 2 23
+#capture 11 circle-light-minimal       11 4 0 1 2 2 23
+
+### tutti i colori
+#for color in {0..16}; do
+#  printf -v index '%02d' "$color"
+#  capture "$index" "square-all-elements-color-$index" 1 "$color" 1 1 2 2 23
+#done
+
+### Special
+capture 00 circle-light-minimal        0 4 0 1 2 2 23
 
 ffmpeg -y -framerate 1 -pattern_type glob -i "$frames_dir/*.png" \
   -filter_complex '[0:v]split[frames][palette];[palette]palettegen=stats_mode=single[pal];[frames][pal]paletteuse=new=1' \
