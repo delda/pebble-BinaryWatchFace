@@ -574,7 +574,7 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
 void draw_bluetooth(GContext *gContext){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
+  #if defined(PBL_PLATFORM_APLITE)
     if(bt_bitmap_off == NULL)
       bt_bitmap_off = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_BW_OFF_IMG);
     if(bt_bitmap_on == NULL)
@@ -596,7 +596,7 @@ void draw_bluetooth(GContext *gContext){
     int y = 7;
     int w = 10;
     int h = 16;
-    #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
+    #if defined(PBL_PLATFORM_APLITE)
       if(bluetooth_status == 1){
         w = 6;
         h = 14;
@@ -604,7 +604,7 @@ void draw_bluetooth(GContext *gContext){
         w = 12;
         h = 13;
       }
-    #elif PBL_PLATFORM_BASALT
+    #elif defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT)
       y = 6;
     #elif defined(PBL_PLATFORM_EMERY)
       // Emery's scaled destination is 14x23px.  Use the matching bitmap:
@@ -618,8 +618,11 @@ void draw_bluetooth(GContext *gContext){
       }
     #endif
     GRect rect = layout_rect(GRect(x, y, w, h));
-    #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
-      graphics_context_set_compositing_mode(gContext, GCompOpOr);
+    #if defined(PBL_PLATFORM_APLITE)
+      // The Bluetooth artwork is white with transparency.  Clear its opaque
+      // pixels on the light theme so it remains visible against white.
+      graphics_context_set_compositing_mode(gContext,
+                                            color == 0 ? GCompOpClear : GCompOpOr);
     #else
       graphics_context_set_compositing_mode(gContext, GCompOpSet);
     #endif
@@ -628,16 +631,6 @@ void draw_bluetooth(GContext *gContext){
     }else{
       graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
     }
-    #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
-      if(color == 0){
-        graphics_context_set_compositing_mode(gContext, GCompOpClear);
-        if(bluetooth_status == 0){
-          graphics_draw_bitmap_in_rect(gContext, bt_bitmap_off, rect);
-        }else{
-          graphics_draw_bitmap_in_rect(gContext, bt_bitmap_on, rect);
-        }
-      }
-    #endif
   }
 }
 
@@ -685,7 +678,9 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     #endif
     if(battery_modality == 0){
       int battery_width = layout_value(23);
-      #ifdef PBL_PLATFORM_EMERY
+      #ifdef PBL_PLATFORM_GABBRO
+        battery_width -= 1;
+      #elif defined(PBL_PLATFORM_EMERY)
         battery_width -= 1;
       #endif
       graphics_draw_rect(gContext,
@@ -693,14 +688,20 @@ void draw_battery(GContext *gContext, int battery, Color palette){
       graphics_draw_line(gContext, GPoint(x + battery_width, y + layout_value(4)), GPoint(x + battery_width, y + layout_value(9)));
 
       int battery_blocks = battery_level / 10;
-      #ifdef PBL_PLATFORM_EMERY
+      #if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
         battery_blocks = battery_blocks > 9 ? 9 : battery_blocks;
       #endif
       for(int z=1; z<=battery_blocks; z++){
-        #ifdef PBL_PLATFORM_EMERY
+        #if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
+          int battery_bar_height = layout_value(10) - layout_value(2) + 1;
+          int battery_bar_x = x + 2 + (z - 1) * 3;
+          #ifdef PBL_PLATFORM_GABBRO
+            battery_bar_height += 1;
+            battery_bar_x += 1;
+          #endif
           graphics_fill_rect(gContext,
-                             GRect(x + 2 + (z - 1) * 3, y + layout_value(2),
-                                   2, layout_value(10) - layout_value(2) + 1),
+                             GRect(battery_bar_x, y + layout_value(2),
+                                   2, battery_bar_height),
                              0, GCornerNone);
         #else
         graphics_draw_line(gContext, GPoint(x + layout_value(2*z), y + layout_value(2)), GPoint(x + layout_value(2*z), y + layout_value(10)));
@@ -714,7 +715,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     }else{
       #ifndef PBL_PLATFORM_CHALK
         GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
-        #ifdef PBL_PLATFORM_EMERY
+        #if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
           font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
         #endif
         graphics_draw_rect(gContext,

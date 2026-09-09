@@ -1,7 +1,7 @@
 {
   "name": "binary-watchface",
   "author": "delda@virgilio.it",
-  "version": "4.0.0",
+  "version": "4.2.0",
   "private": true,
   "keywords": [
     "pebble-app"
@@ -16,7 +16,8 @@
       "basalt",
       "chalk",
       "diorite",
-      "emery"
+      "emery",
+      "flint"
     ],
     "enableMultiJS": true,
     "capabilities": [
@@ -37,8 +38,7 @@
           "file": "images/Bluetooth_off_15x15.png",
           "name": "BLUETOOTH_BW_OFF_IMG",
           "targetPlatforms": [
-            "aplite",
-            "flint"
+            "aplite"
           ],
           "type": "bitmap"
         },
@@ -46,8 +46,7 @@
           "file": "images/Bluetooth_15x15.png",
           "name": "BLUETOOTH_BW_ON_IMG",
           "targetPlatforms": [
-            "aplite",
-            "flint"
+            "aplite"
           ],
           "type": "bitmap"
         },
@@ -58,7 +57,8 @@
             "basalt",
             "chalk",
             "diorite",
-            "emery"
+            "emery",
+            "flint"
           ],
           "type": "bitmap"
         },
@@ -69,7 +69,8 @@
             "basalt",
             "chalk",
             "diorite",
-            "emery"
+            "emery",
+            "flint"
           ],
           "type": "bitmap"
         },
