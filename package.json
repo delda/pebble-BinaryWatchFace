@@ -1,7 +1,7 @@
 {
   "name": "binary-watchface",
   "author": "delda@virgilio.it",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "private": true,
   "keywords": [
     "pebble-app"
@@ -17,7 +17,8 @@
       "chalk",
       "diorite",
       "emery",
-      "flint"
+      "flint",
+      "gabbro"
     ],
     "enableMultiJS": true,
     "capabilities": [
