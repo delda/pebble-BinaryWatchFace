@@ -1,4 +1,5 @@
 #include "main.h"
+#include "health.h"
 #include "shapes_maker.h"
 #include "common.h"
 
@@ -61,80 +62,11 @@ static void bluetooth_handler(bool connected){
   layer_mark_dirty(s_mainLayer);
 }
 
-#if defined(PBL_HEALTH)
-static bool heart_rate_subscription_active;
-
-static void refresh_heart_rate(void) {
-  time_t now = time(NULL);
-  HealthServiceAccessibilityMask accessibility =
-      health_service_metric_accessible(HealthMetricHeartRateBPM, now, now);
-
-  if (accessibility & HealthServiceAccessibilityMaskAvailable) {
-    HealthValue value = health_service_peek_current_value(HealthMetricHeartRateBPM);
-    heart_rate_bpm = value > 0 ? (int)value : 0;
-  } else {
-    heart_rate_bpm = 0;
-  }
-}
-
-static void refresh_steps(void) {
-  time_t now = time(NULL);
-  HealthServiceAccessibilityMask accessibility =
-      health_service_metric_accessible(HealthMetricStepCount, now, now);
-
-  if (accessibility & HealthServiceAccessibilityMaskAvailable) {
-    HealthValue value = health_service_sum_today(HealthMetricStepCount);
-    steps_today = value > 0 ? (int)value : 0;
-  } else {
-    steps_today = 0;
-  }
-}
-
-static void health_handler(HealthEventType event, void *context) {
-  if (event == HealthEventHeartRateUpdate || event == HealthEventMovementUpdate ||
-      event == HealthEventSignificantUpdate) {
-    if (show_heart_rate) {
-      refresh_heart_rate();
-    }
-    if (show_steps) {
-      refresh_steps();
-    }
+static void health_values_changed(void) {
+  if (s_mainLayer != NULL) {
     layer_mark_dirty(s_mainLayer);
   }
 }
-
-static void set_health_monitoring(void) {
-  bool enabled = show_heart_rate || show_steps;
-  if (!enabled) {
-    heart_rate_bpm = 0;
-    steps_today = 0;
-    if (heart_rate_subscription_active) {
-      health_service_set_heart_rate_sample_period(0);
-      health_service_events_unsubscribe();
-      heart_rate_subscription_active = false;
-    }
-    return;
-  }
-
-  if (!heart_rate_subscription_active) {
-    heart_rate_subscription_active = health_service_events_subscribe(health_handler, NULL);
-  }
-  if (heart_rate_subscription_active) {
-    // Pebble may choose a different rate to preserve battery life.
-    health_service_set_heart_rate_sample_period(show_heart_rate ? 60 : 0);
-    if (show_heart_rate) {
-      refresh_heart_rate();
-    } else {
-      heart_rate_bpm = 0;
-    }
-    if (show_steps) {
-      refresh_steps();
-    } else {
-      steps_today = 0;
-    }
-  }
-}
-#endif
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
@@ -203,17 +135,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case HEART_RATE_KEY:
         show_heart_rate = t->value->uint8 % 2;
         persist_write_int(HEART_RATE_KEY, show_heart_rate);
-        #if defined(PBL_HEALTH)
-          set_health_monitoring();
-        #endif
+        health_set_enabled(show_heart_rate, show_steps);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "heart rate: %d", show_heart_rate);
         break;
       case STEPS_KEY:
         show_steps = t->value->uint8 % 2;
         persist_write_int(STEPS_KEY, show_steps);
-        #if defined(PBL_HEALTH)
-          set_health_monitoring();
-        #endif
+        health_set_enabled(show_heart_rate, show_steps);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "steps: %d", show_steps);
         break;
     }
@@ -308,10 +236,10 @@ static void update_view(Layer *layer, GContext *gContext){
   #if defined(PBL_HEALTH)
   #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
   if (show_heart_rate)
-    draw_heart_rate(gContext, palette[color], heart_rate_bpm);
+    draw_heart_rate(gContext, palette[color], health_get_heart_rate());
   #endif
   if (show_steps)
-    draw_steps(gContext, palette[color], steps_today);
+    draw_steps(gContext, palette[color], health_get_steps());
   #endif
 
   // is easter egg
@@ -346,9 +274,8 @@ static void window_load(Window *window){
 
   battery_callback(battery_state_service_peek());
 
-  #if defined(PBL_HEALTH)
-    set_health_monitoring();
-  #endif
+  health_init(health_values_changed);
+  health_set_enabled(show_heart_rate, show_steps);
 }
 
 static void window_unload(){
@@ -495,11 +422,7 @@ static void init(){
 static void deinit(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
-  #if defined(PBL_HEALTH)
-    show_heart_rate = 0;
-    show_steps = 0;
-    set_health_monitoring();
-  #endif
+  health_deinit();
 
   // Destroy Window
   window_destroy(s_window);

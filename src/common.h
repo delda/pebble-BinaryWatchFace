@@ -40,10 +40,6 @@ static int BA_ALWAYS          = 2;
 static int BA_PERCENT_WARNING = 30;
 static int BA_PERCENT_ALARM   = 10;
 
-// Heart rate is zero until Pebble Health provides a valid reading.
-int heart_rate_bpm;
-int steps_today;
-
 // Date string
 char date_buffer[30];
 char bufferLocale[6];
