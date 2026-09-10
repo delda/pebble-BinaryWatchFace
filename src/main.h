@@ -37,6 +37,7 @@ enum appParameters {
   HELP_NUM_KEY    = 0x7,
   SNOW_KEY        = 0x8,
   HEART_RATE_KEY  = 0x9,
+  STEPS_KEY       = 0xA,
 };
 
 static int SHAPE_NUM = 12;

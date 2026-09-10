@@ -77,16 +77,37 @@ static void refresh_heart_rate(void) {
   }
 }
 
+static void refresh_steps(void) {
+  time_t now = time(NULL);
+  HealthServiceAccessibilityMask accessibility =
+      health_service_metric_accessible(HealthMetricStepCount, now, now);
+
+  if (accessibility & HealthServiceAccessibilityMaskAvailable) {
+    HealthValue value = health_service_sum_today(HealthMetricStepCount);
+    steps_today = value > 0 ? (int)value : 0;
+  } else {
+    steps_today = 0;
+  }
+}
+
 static void health_handler(HealthEventType event, void *context) {
-  if (event == HealthEventHeartRateUpdate || event == HealthEventSignificantUpdate) {
-    refresh_heart_rate();
+  if (event == HealthEventHeartRateUpdate || event == HealthEventMovementUpdate ||
+      event == HealthEventSignificantUpdate) {
+    if (show_heart_rate) {
+      refresh_heart_rate();
+    }
+    if (show_steps) {
+      refresh_steps();
+    }
     layer_mark_dirty(s_mainLayer);
   }
 }
 
-static void set_heart_rate_monitoring(bool enabled) {
+static void set_health_monitoring(void) {
+  bool enabled = show_heart_rate || show_steps;
   if (!enabled) {
     heart_rate_bpm = 0;
+    steps_today = 0;
     if (heart_rate_subscription_active) {
       health_service_set_heart_rate_sample_period(0);
       health_service_events_unsubscribe();
@@ -100,8 +121,17 @@ static void set_heart_rate_monitoring(bool enabled) {
   }
   if (heart_rate_subscription_active) {
     // Pebble may choose a different rate to preserve battery life.
-    health_service_set_heart_rate_sample_period(60);
-    refresh_heart_rate();
+    health_service_set_heart_rate_sample_period(show_heart_rate ? 60 : 0);
+    if (show_heart_rate) {
+      refresh_heart_rate();
+    } else {
+      heart_rate_bpm = 0;
+    }
+    if (show_steps) {
+      refresh_steps();
+    } else {
+      steps_today = 0;
+    }
   }
 }
 #endif
@@ -174,9 +204,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         show_heart_rate = t->value->uint8 % 2;
         persist_write_int(HEART_RATE_KEY, show_heart_rate);
         #if defined(PBL_HEALTH)
-          set_heart_rate_monitoring(show_heart_rate);
+          set_health_monitoring();
         #endif
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "heart rate: %d", show_heart_rate);
+        break;
+      case STEPS_KEY:
+        show_steps = t->value->uint8 % 2;
+        persist_write_int(STEPS_KEY, show_steps);
+        #if defined(PBL_HEALTH)
+          set_health_monitoring();
+        #endif
+        if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "steps: %d", show_steps);
         break;
     }
     // Get next pair, if any
@@ -266,11 +304,14 @@ static void update_view(Layer *layer, GContext *gContext){
   if(date > 0)
     draw_date(gContext, palette[color]);
 
-  // Only HR-capable target displays reserve space for this indicator. A zero
-  // value is rendered as a dash until Pebble Health supplies a valid sample.
+  // The values are rendered only on watches with Pebble Health support.
+  #if defined(PBL_HEALTH)
   #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
   if (show_heart_rate)
     draw_heart_rate(gContext, palette[color], heart_rate_bpm);
+  #endif
+  if (show_steps)
+    draw_steps(gContext, palette[color], steps_today);
   #endif
 
   // is easter egg
@@ -306,7 +347,7 @@ static void window_load(Window *window){
   battery_callback(battery_state_service_peek());
 
   #if defined(PBL_HEALTH)
-    set_heart_rate_monitoring(show_heart_rate);
+    set_health_monitoring();
   #endif
 }
 
@@ -344,6 +385,7 @@ static void init(){
   help_num = 1;
   snow = 0;
   show_heart_rate = 1;
+  show_steps = 1;
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
     shape = shape % SHAPE_NUM;
@@ -383,6 +425,10 @@ static void init(){
   if(persist_exists(HEART_RATE_KEY)){
     show_heart_rate = persist_read_int(HEART_RATE_KEY);
     show_heart_rate = show_heart_rate % 2;
+  }
+  if(persist_exists(STEPS_KEY)){
+    show_steps = persist_read_int(STEPS_KEY);
+    show_steps = show_steps % 2;
   }
   
   // Create the colors palette
@@ -450,7 +496,9 @@ static void deinit(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   #if defined(PBL_HEALTH)
-    set_heart_rate_monitoring(false);
+    show_heart_rate = 0;
+    show_steps = 0;
+    set_health_monitoring();
   #endif
 
   // Destroy Window

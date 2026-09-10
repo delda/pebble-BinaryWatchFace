@@ -747,13 +747,18 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm) 
   // bottom strip.
   // The heart (14px) plus the BPM field (34px) occupy 52px in the
   // reference layout; centre that group horizontally on each display.
-  int x = 54;
+  // The heart indicator occupies 52px. Centre it alone, or align its icon to
+  // the "16" column of the second binary row on Emery.
+  int x = show_steps ? 0 : 46;
   int y = 102;
   #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
-    x = 64;
     y = 166;
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
+    if (show_steps) {
+      // The heart centre is x + 7. The "16" column is centred at x = 40.
+      x = 33;
+    }
   #endif
 
   graphics_context_set_fill_color(gContext, palette.text);
@@ -790,14 +795,95 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm) 
   #endif
   #ifdef PBL_PLATFORM_EMERY
     font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
-    text_y -= 3;
+    if (!show_steps) {
+      text_y -= 3;
+    }
   #endif
   graphics_context_set_text_color(gContext, palette.text);
+  #ifdef PBL_PLATFORM_EMERY
+  if (show_steps) {
+    // Keep the BPM value after the heart while leaving space for the walking
+    // icon aligned with the second-row "4" column.
+    graphics_draw_text(gContext,
+                       heart_rate_buffer,
+                       fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
+                       layout_rect(GRect(x + 16, text_y - 5, 25, 22)),
+                       GTextOverflowModeFill,
+                       GTextAlignmentLeft,
+                       NULL);
+    return;
+  }
+  #endif
   graphics_draw_text(gContext,
                      heart_rate_buffer,
                      font,
                      layout_rect(GRect(x + 18, text_y, 34, 24)),
                      GTextOverflowModeFill,
+                     GTextAlignmentLeft,
+                     NULL);
+}
+
+void draw_steps(GContext *gContext, Color palette, int steps) {
+  bool show_heart_indicator = false;
+  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    show_heart_indicator = show_heart_rate;
+  #endif
+  // The walking-person indicator is centred when alone; beside the heart its
+  // value extends to the right edge of the 144px design canvas.
+  int x = show_heart_indicator ? 76 : 30;
+  int y = 102;
+  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    y = 166;
+  #elif defined(PBL_PLATFORM_EMERY)
+    y = 118;
+    if (show_heart_indicator) {
+      // The walking-person centre is x + 8. The "4" column is x = 82.
+      x = 74;
+    }
+  #endif
+  #ifdef PBL_PLATFORM_GABBRO
+    // Gabbro's 180px-wide screen uses a 13/9 horizontal scale. With both
+    // indicators visible, start the 68px step group at 56 so its value ends
+    // exactly at the right edge instead of being clipped beyond it.
+    if (show_heart_indicator) {
+      x = 56;
+    }
+  #endif
+
+  // A walking-person pictogram is more immediately associated with a step
+  // counter than a generic shoe or footprint.
+  graphics_context_set_fill_color(gContext, palette.text);
+  graphics_context_set_stroke_color(gContext, palette.text);
+  graphics_fill_circle(gContext, layout_point(GPoint(x + 8, y + 3)), layout_value(2));
+  graphics_context_set_stroke_width(gContext, layout_value(2));
+  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 6)),
+                     layout_point(GPoint(x + 8, y + 11)));
+  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 7)),
+                     layout_point(GPoint(x + 3, y + 9)));
+  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 7)),
+                     layout_point(GPoint(x + 13, y + 8)));
+  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 11)),
+                     layout_point(GPoint(x + 4, y + 15)));
+  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 11)),
+                     layout_point(GPoint(x + 13, y + 14)));
+
+  char steps_buffer[12];
+  snprintf(steps_buffer, sizeof(steps_buffer), "%d", steps);
+  GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
+  #ifdef PBL_PLATFORM_GABBRO
+    font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  #endif
+  #ifdef PBL_PLATFORM_EMERY
+    font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+  #endif
+  graphics_context_set_text_color(gContext, palette.text);
+  graphics_draw_text(gContext,
+                     steps_buffer,
+                     font,
+                     layout_rect(GRect(x + 19, y + (show_heart_indicator ? -5 : -1),
+                                       show_heart_indicator ? 49 : 62,
+                                       show_heart_indicator ? 22 : 26)),
+                     GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
                      NULL);
 }
@@ -819,6 +905,7 @@ void draw_date(GContext *gContext, Color palette){
     y = (date > 28 && !isEasterEggDay()) ? 120 : 136;
     w = 144;
   #endif
+  y += 3;
   GRect rect = layout_rect(GRect(x, y, w, h));
   int esternEgg = isEasterEggDay();
   if(esternEgg != 0){

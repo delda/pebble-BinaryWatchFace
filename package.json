@@ -117,7 +117,8 @@
       "DATE_KEY": 6,
       "HELP_NUM_KEY": 7,
       "SNOW_KEY": 8,
-      "HEART_RATE_KEY": 9
+      "HEART_RATE_KEY": 9,
+      "STEPS_KEY": 10
     }
   }
 }

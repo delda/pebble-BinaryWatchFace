@@ -26,6 +26,7 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers);
 void draw_bluetooth(GContext *gContext);
 void draw_battery(GContext *gContext, int battery, Color palette);
 void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm);
+void draw_steps(GContext *gContext, Color palette, int steps);
 void draw_date(GContext *gContext, Color palette);
 void get_date_format(int dateKey);
 void draw_snow(GContext *gContext, struct Flake *flakes);

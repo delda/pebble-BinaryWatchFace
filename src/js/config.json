@@ -75,7 +75,8 @@
         "options": [{"label": "Icon", "value": "0"}, {"label": "Percentage", "value": "1"}]
       },
       {"type": "toggle", "messageKey": "SNOW_KEY", "label": "Snowfall", "defaultValue": false},
-      {"type": "toggle", "messageKey": "HEART_RATE_KEY", "label": "Show heart rate", "defaultValue": true}
+      {"type": "toggle", "messageKey": "HEART_RATE_KEY", "label": "Show heart rate", "defaultValue": true},
+      {"type": "toggle", "messageKey": "STEPS_KEY", "label": "Show steps", "defaultValue": true}
     ]
   },
   {

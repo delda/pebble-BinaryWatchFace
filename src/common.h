@@ -21,6 +21,7 @@ int date;
 int help_num;
 int snow;
 int show_heart_rate;
+int show_steps;
 
 // Bluetooth
 int bluetooth_status;
@@ -41,6 +42,7 @@ static int BA_PERCENT_ALARM   = 10;
 
 // Heart rate is zero until Pebble Health provides a valid reading.
 int heart_rate_bpm;
+int steps_today;
 
 // Date string
 char date_buffer[30];
