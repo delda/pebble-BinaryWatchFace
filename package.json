@@ -1,7 +1,7 @@
 {
   "name": "binary-watchface",
   "author": "delda@virgilio.it",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "private": true,
   "keywords": [
     "pebble-app"
@@ -23,6 +23,7 @@
     "enableMultiJS": true,
     "capabilities": [
       "location",
+      "health",
       "configurable"
     ],
     "projectType": "native",
@@ -115,7 +116,8 @@
       "BATTERY_MOD_KEY": 5,
       "DATE_KEY": 6,
       "HELP_NUM_KEY": 7,
-      "SNOW_KEY": 8
+      "SNOW_KEY": 8,
+      "HEART_RATE_KEY": 9
     }
   }
 }

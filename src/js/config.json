@@ -74,7 +74,8 @@
         "type": "select", "messageKey": "BATTERY_MOD_KEY", "label": "Formato batteria", "defaultValue": "0", "serializeValueAs": "integer",
         "options": [{"label": "Icona", "value": "0"}, {"label": "Percentuale", "value": "1"}]
       },
-      {"type": "toggle", "messageKey": "SNOW_KEY", "label": "Nevicata", "defaultValue": false}
+      {"type": "toggle", "messageKey": "SNOW_KEY", "label": "Nevicata", "defaultValue": false},
+      {"type": "toggle", "messageKey": "HEART_RATE_KEY", "label": "Mostra battito cardiaco", "defaultValue": true}
     ]
   },
   {

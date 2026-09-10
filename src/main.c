@@ -61,6 +61,51 @@ static void bluetooth_handler(bool connected){
   layer_mark_dirty(s_mainLayer);
 }
 
+#if defined(PBL_HEALTH)
+static bool heart_rate_subscription_active;
+
+static void refresh_heart_rate(void) {
+  time_t now = time(NULL);
+  HealthServiceAccessibilityMask accessibility =
+      health_service_metric_accessible(HealthMetricHeartRateBPM, now, now);
+
+  if (accessibility & HealthServiceAccessibilityMaskAvailable) {
+    HealthValue value = health_service_peek_current_value(HealthMetricHeartRateBPM);
+    heart_rate_bpm = value > 0 ? (int)value : 0;
+  } else {
+    heart_rate_bpm = 0;
+  }
+}
+
+static void health_handler(HealthEventType event, void *context) {
+  if (event == HealthEventHeartRateUpdate || event == HealthEventSignificantUpdate) {
+    refresh_heart_rate();
+    layer_mark_dirty(s_mainLayer);
+  }
+}
+
+static void set_heart_rate_monitoring(bool enabled) {
+  if (!enabled) {
+    heart_rate_bpm = 0;
+    if (heart_rate_subscription_active) {
+      health_service_set_heart_rate_sample_period(0);
+      health_service_events_unsubscribe();
+      heart_rate_subscription_active = false;
+    }
+    return;
+  }
+
+  if (!heart_rate_subscription_active) {
+    heart_rate_subscription_active = health_service_events_subscribe(health_handler, NULL);
+  }
+  if (heart_rate_subscription_active) {
+    // Pebble may choose a different rate to preserve battery life.
+    health_service_set_heart_rate_sample_period(60);
+    refresh_heart_rate();
+  }
+}
+#endif
+
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
@@ -124,6 +169,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         snow = snow % 2;
         persist_write_int(SNOW_KEY, snow);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "snow option: %d", snow);
+        break;
+      case HEART_RATE_KEY:
+        show_heart_rate = t->value->uint8 % 2;
+        persist_write_int(HEART_RATE_KEY, show_heart_rate);
+        #if defined(PBL_HEALTH)
+          set_heart_rate_monitoring(show_heart_rate);
+        #endif
+        if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "heart rate: %d", show_heart_rate);
         break;
     }
     // Get next pair, if any
@@ -213,6 +266,13 @@ static void update_view(Layer *layer, GContext *gContext){
   if(date > 0)
     draw_date(gContext, palette[color]);
 
+  // Only HR-capable target displays reserve space for this indicator. A zero
+  // value is rendered as a dash until Pebble Health supplies a valid sample.
+  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+  if (show_heart_rate)
+    draw_heart_rate(gContext, palette[color], heart_rate_bpm);
+  #endif
+
   // is easter egg
   if(isEasterEggDay() != 0 || snow){
     for(int i=0; i<NUM_FLAKES; i++){
@@ -244,6 +304,10 @@ static void window_load(Window *window){
   bluetooth_handler(bluetooth_connection_service_peek());
 
   battery_callback(battery_state_service_peek());
+
+  #if defined(PBL_HEALTH)
+    set_heart_rate_monitoring(show_heart_rate);
+  #endif
 }
 
 static void window_unload(){
@@ -279,6 +343,7 @@ static void init(){
   date = 23;
   help_num = 1;
   snow = 0;
+  show_heart_rate = 1;
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
     shape = shape % SHAPE_NUM;
@@ -314,6 +379,10 @@ static void init(){
   if(persist_exists(SNOW_KEY)){
     snow = persist_read_int(SNOW_KEY);
     snow = snow % 2;
+  }
+  if(persist_exists(HEART_RATE_KEY)){
+    show_heart_rate = persist_read_int(HEART_RATE_KEY);
+    show_heart_rate = show_heart_rate % 2;
   }
   
   // Create the colors palette
@@ -380,6 +449,10 @@ static void init(){
 static void deinit(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
+  #if defined(PBL_HEALTH)
+    set_heart_rate_monitoring(false);
+  #endif
+
   // Destroy Window
   window_destroy(s_window);
 }

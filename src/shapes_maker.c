@@ -741,6 +741,67 @@ void draw_battery(GContext *gContext, int battery, Color palette){
   }
 }
 
+void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm) {
+  // This function is called only for the HR-capable target displays. Keep the
+  // indicator between the binary clock and date, or in the round display's
+  // bottom strip.
+  // The heart (14px) plus the BPM field (34px) occupy 52px in the
+  // reference layout; centre that group horizontally on each display.
+  int x = 54;
+  int y = 102;
+  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    x = 64;
+    y = 166;
+  #elif defined(PBL_PLATFORM_EMERY)
+    y = 118;
+  #endif
+
+  graphics_context_set_fill_color(gContext, palette.text);
+  const int radius = layout_value(4);
+  graphics_fill_circle(gContext, layout_point(GPoint(x + 4, y + 5)), radius);
+  graphics_fill_circle(gContext, layout_point(GPoint(x + 10, y + 5)), radius);
+
+  GPoint points[] = {
+    layout_point(GPoint(x, y + 6)),
+    layout_point(GPoint(x + 14, y + 6)),
+    layout_point(GPoint(x + 7, y + 15)),
+  };
+  GPathInfo heart_info = {
+    .num_points = ARRAY_LENGTH(points),
+    .points = points,
+  };
+  GPath *heart = gpath_create(&heart_info);
+  if (heart != NULL) {
+    gpath_draw_filled(gContext, heart);
+    gpath_destroy(heart);
+  }
+
+  char heart_rate_buffer[4];
+  if (heart_rate_bpm > 0) {
+    snprintf(heart_rate_buffer, sizeof(heart_rate_buffer), "%u",
+             (unsigned int)heart_rate_bpm);
+  } else {
+    snprintf(heart_rate_buffer, sizeof(heart_rate_buffer), "-");
+  }
+  int text_y = y;
+  GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
+  #ifdef PBL_PLATFORM_GABBRO
+    font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  #endif
+  #ifdef PBL_PLATFORM_EMERY
+    font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+    text_y -= 3;
+  #endif
+  graphics_context_set_text_color(gContext, palette.text);
+  graphics_draw_text(gContext,
+                     heart_rate_buffer,
+                     font,
+                     layout_rect(GRect(x + 18, text_y, 34, 24)),
+                     GTextOverflowModeFill,
+                     GTextAlignmentLeft,
+                     NULL);
+}
+
 void draw_date(GContext *gContext, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
