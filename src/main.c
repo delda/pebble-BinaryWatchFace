@@ -335,6 +335,7 @@ static void init(){
     palette[14] = (Color){GColorDarkGreen,      GColorLimerick,              GColorLimerick,              GColorYellow,            GColorArmyGreen};         // Summer Grass
     palette[15] = (Color){GColorRed,            GColorDarkGreen,             GColorDarkGreen,             GColorDarkGreen,         GColorRed};               // Christmas
     palette[16] = (Color){GColorBlack,          GColorPastelYellow,          GColorPastelYellow,          GColorChromeYellow,      GColorBlack};             // Christmas
+    palette[17] = (Color){GColorRed,            GColorWhite,                 GColorWhite,                 GColorMelon,             GColorDarkCandyAppleRed}; // Valentine's Day
   #else
     palette[0]  = (Color){GColorWhite,         GColorBlack,         GColorBlack,         GColorBlack,             GColorBlack};
     palette[1]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};

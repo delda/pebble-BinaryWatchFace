@@ -42,8 +42,8 @@ enum appParameters {
 
 static int SHAPE_NUM = 13;
 #ifdef PBL_COLOR
-  static int COLOR_NUM = 17;
-  static Color palette[17];
+  static int COLOR_NUM = 18;
+  static Color palette[18];
 #else
   static int COLOR_NUM = 3;
   static Color palette[3];

@@ -1,7 +1,7 @@
 {
   "name": "binary-watchface",
   "author": "delda@virgilio.it",
-  "version": "4.4.0",
+  "version": "4.7.0",
   "private": true,
   "keywords": [
     "pebble-app"

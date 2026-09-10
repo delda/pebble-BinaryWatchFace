@@ -957,6 +957,8 @@ void draw_date(GContext *gContext, Color palette){
       snprintf(date_buffer, sizeof(date_buffer), "Merry Christmas!");
     }else if(esternEgg == 2){
       snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
+    }else if(esternEgg == 3){
+      snprintf(date_buffer, sizeof(date_buffer), "Be my Valentine!");
     }
   }
   //////////////////////////////////////////////////////////////////
@@ -1200,6 +1202,8 @@ int isEasterEggDay(){
     return 1;
   }else if(timeinfo->tm_mon==0 && timeinfo->tm_mday==1){
     return 2;
+  }else if(timeinfo->tm_mon==1 && timeinfo->tm_mday==14){
+    return 3;
   }
   return 0;
 }
