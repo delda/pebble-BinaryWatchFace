@@ -12,9 +12,7 @@ struct Flake{
   GPoint pos;
   int size;
   int angle;
-}flakes[NUM_FLAKES];
-static Layer *s_flakeLayer[NUM_FLAKES];
-struct Flake tmp;
+};
 
 GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius);
 void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor);
@@ -29,7 +27,7 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm);
 void draw_steps(GContext *gContext, Color palette, int steps);
 void draw_date(GContext *gContext, Color palette);
 void get_date_format(int dateKey);
-void draw_snow(GContext *gContext, struct Flake *flakes);
+void draw_snow(GContext *gContext, struct Flake *flakes, Layer *flake_layers[NUM_FLAKES]);
 void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake);
 void shake_flakes(struct Flake *flakes);
 void anim_stopped_handler(Animation *animation, bool finished, void *context);

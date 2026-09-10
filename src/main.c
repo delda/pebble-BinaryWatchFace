@@ -1,9 +1,13 @@
 #include "main.h"
 #include "health.h"
+#include "render.h"
 #include "shapes_maker.h"
 #include "common.h"
 
 #include "settings.c"
+
+static struct Flake s_flakes[NUM_FLAKES];
+static Layer *s_flake_layers[NUM_FLAKES];
 
 void dec2binTime(int hour, int minute){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
@@ -198,56 +202,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 }
 
 static void update_view(Layer *layer, GContext *gContext){
-  if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-  
-  int esternEgg = isEasterEggDay();
-  if(esternEgg != 0){
-    #ifdef PBL_PLATFORM_APLITE
-      color = 0;
-    #else
-      shape = (esternEgg == 2) ? 11 : shape;
-      color = (esternEgg == 1) ? 15 : 16;
-    #endif
-  }
-    
-  // Background
-  draw_background(gContext, 0, GCornerNone, palette[color]);
-  
-  // Time in background
-  if(number > 0)
-    draw_time_background(gContext, palette[color]);
-
-  // Dots and help numbers
-  draw_clock(gContext, palette[color], (bool)help_num);
-  
-  // Bluetooth
-  if(bluetooth > 0)
-    draw_bluetooth(gContext);
-  
-  // Battery
-  if(battery > 0)
-    draw_battery(gContext, battery, palette[color]); 
-
-  // Print date
-  if(date > 0)
-    draw_date(gContext, palette[color]);
-
-  // The values are rendered only on watches with Pebble Health support.
-  #if defined(PBL_HEALTH)
-  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
-  if (show_heart_rate)
-    draw_heart_rate(gContext, palette[color], health_get_heart_rate());
-  #endif
-  if (show_steps)
-    draw_steps(gContext, palette[color], health_get_steps());
-  #endif
-
-  // is easter egg
-  if(isEasterEggDay() != 0 || snow){
-    for(int i=0; i<NUM_FLAKES; i++){
-      draw_flake(gContext, s_flakeLayer[i], flakes[i]);
-    }    
-  }
+  (void)layer;
+  render_watchface(gContext, palette, health_get_heart_rate(),
+                   health_get_steps(), s_flakes, s_flake_layers);
 }
 
 static void window_load(Window *window){
@@ -264,8 +221,8 @@ static void window_load(Window *window){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "bullets: %d - %d", s_bulletsNumber[0], s_bulletsNumber[1]);
 
   for(int i=0; i<NUM_FLAKES; i++){
-    s_flakeLayer[i] = layer_create(GRect(0, 0, 16, 16));
-    layer_add_child(window_layer, s_flakeLayer[i]);
+    s_flake_layers[i] = layer_create(GRect(0, 0, 16, 16));
+    layer_add_child(window_layer, s_flake_layers[i]);
   }
 
   layer_set_update_proc(s_mainLayer, update_view);
@@ -384,7 +341,7 @@ static void init(){
     palette[2]  = (Color){GColorBlack,         GColorWhite,         GColorWhite,         GColorWhite,             GColorWhite};
   #endif
   
-  int flakesSize = sizeof(flakes) / sizeof(flakes[0]);
+  int flakesSize = sizeof(s_flakes) / sizeof(s_flakes[0]);
   int x, y, size;
   GRect windowBounds = layer_get_bounds(window_get_root_layer(s_window));
   int windowWidth = windowBounds.size.w;
@@ -396,8 +353,8 @@ static void init(){
     x = rand() % windowWidth;
     y = rand() % windowHeight;
     size = rand() % 6;
-    flakes[i].pos = (GPoint){x, y};
-    flakes[i].size = size;
+    s_flakes[i].pos = (GPoint){x, y};
+    s_flakes[i].size = size;
   }
   
   // Set window handlers

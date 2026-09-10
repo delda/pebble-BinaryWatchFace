@@ -5,6 +5,8 @@
 
 #include "settings.c"
 
+static struct Flake tmp;
+
 GPathInfo *draw_star(int number_of_sides, int w, int h, int radius){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
@@ -1137,12 +1139,12 @@ void shake_flakes(struct Flake *flakes){
   }
 }
 
-void draw_snow(GContext *gContext, struct Flake *flakes){
+void draw_snow(GContext *gContext, struct Flake *flakes, Layer *flake_layers[NUM_FLAKES]){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   shake_flakes(flakes);
   for(int i=0; i<NUM_FLAKES; i++){
-    draw_flake(gContext, s_flakeLayer[i], flakes[i]);
+    draw_flake(gContext, flake_layers[i], flakes[i]);
   }
 }
 
