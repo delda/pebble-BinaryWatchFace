@@ -116,6 +116,48 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
   int numberOfSides = 0;
   int border = 0;
   switch(shape){
+    case 12: {  // heart
+      int w = currentWidth;
+      int h = currentHeight;
+      GPathInfo outline = (GPathInfo){.num_points = 12, .points = (GPoint []){
+        {w, h+layout_value(11)},
+        {w-layout_value(10), h+layout_value(1)},
+        {w-layout_value(10), h-layout_value(4)},
+        {w-layout_value(8), h-layout_value(8)},
+        {w-layout_value(4), h-layout_value(9)},
+        {w, h-layout_value(5)},
+        {w+layout_value(4), h-layout_value(9)},
+        {w+layout_value(8), h-layout_value(8)},
+        {w+layout_value(10), h-layout_value(4)},
+        {w+layout_value(10), h+layout_value(1)},
+        {w, h+layout_value(11)},
+        {w, h+layout_value(11)}
+      }};
+      GPathInfo inner = (GPathInfo){.num_points = 12, .points = (GPoint []){
+        {w, h+layout_value(8)},
+        {w-layout_value(8), h},
+        {w-layout_value(8), h-layout_value(3)},
+        {w-layout_value(6), h-layout_value(6)},
+        {w-layout_value(3), h-layout_value(7)},
+        {w, h-layout_value(3)},
+        {w+layout_value(3), h-layout_value(7)},
+        {w+layout_value(6), h-layout_value(6)},
+        {w+layout_value(8), h-layout_value(3)},
+        {w+layout_value(8), h},
+        {w, h+layout_value(8)},
+        {w, h+layout_value(8)}
+      }};
+      GPath *path;
+      graphics_context_set_fill_color(gContext, strokeColor);
+      path = gpath_create(&outline);
+      gpath_draw_filled(gContext, path);
+      gpath_destroy(path);
+      graphics_context_set_fill_color(gContext, fillColor);
+      path = gpath_create(&inner);
+      gpath_draw_filled(gContext, path);
+      gpath_destroy(path);
+      break;
+    }
     case 11:   // star
       numberOfSides = 5;
       graphics_context_set_fill_color(gContext, strokeColor);

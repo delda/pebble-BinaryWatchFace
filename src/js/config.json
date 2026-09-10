@@ -22,7 +22,8 @@
           {"label": "Triangle", "value": "4"}, {"label": "Cross", "value": "5"},
           {"label": "Outlined triangle", "value": "6"}, {"label": "Pentagon", "value": "7"},
           {"label": "Hexagon", "value": "8"}, {"label": "Heptagon", "value": "9"},
-          {"label": "Octagon", "value": "10"}, {"label": "Star", "value": "11"}
+          {"label": "Octagon", "value": "10"}, {"label": "Star", "value": "11"},
+          {"label": "Heart", "value": "12"}
         ]
       },
       {

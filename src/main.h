@@ -40,7 +40,7 @@ enum appParameters {
   STEPS_KEY       = 0xA,
 };
 
-static int SHAPE_NUM = 12;
+static int SHAPE_NUM = 13;
 #ifdef PBL_COLOR
   static int COLOR_NUM = 17;
   static Color palette[17];
