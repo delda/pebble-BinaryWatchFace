@@ -107,7 +107,7 @@ static GPoint layout_point(GPoint point) {
   return GPoint(layout_x(point.x), layout_value(point.y));
 }
 
-void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor){
+void draw_shape(int shape, bool is_active, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   currentWidth = layout_x(currentWidth);
@@ -116,6 +116,117 @@ void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gConte
   int numberOfSides = 0;
   int border = 0;
   switch(shape){
+    case 13: {  // Easter egg
+      int w = currentWidth;
+      int h = currentHeight;
+      if (is_active) {
+        int fracture_y_offset = layout_value(2);
+        // The opened egg is the lower half of the normal egg.  Its broken
+        // edge follows a zig-zag so the original outline remains visible
+        // instead of ending in a flat, straight cut.
+        GPathInfo outer_bottom = (GPathInfo){.num_points = 17, .points = (GPoint []){
+          {w-layout_value(7), h-layout_value(5)-fracture_y_offset},
+          {w-layout_value(9), h+layout_value(3)},
+          {w-layout_value(7), h+layout_value(8)},
+          {w-layout_value(3), h+layout_value(11)},
+          {w+layout_value(3), h+layout_value(11)},
+          {w+layout_value(7), h+layout_value(8)},
+          {w+layout_value(9), h+layout_value(3)},
+          {w+layout_value(5), h-layout_value(5)-fracture_y_offset},
+          {w+layout_value(5), h-layout_value(2)-fracture_y_offset},
+          {w+layout_value(4), h-layout_value(5)-fracture_y_offset},
+          {w+layout_value(3), h-layout_value(2)-fracture_y_offset},
+          {w+layout_value(2), h-layout_value(4)-fracture_y_offset},
+          {w+layout_value(1), h-layout_value(1)-fracture_y_offset},
+          {w-layout_value(1), h-layout_value(4)-fracture_y_offset},
+          {w-layout_value(3), h-fracture_y_offset},
+          {w-layout_value(4), h-layout_value(2)-fracture_y_offset},
+          {w-layout_value(6), h+layout_value(2)-fracture_y_offset}
+        }};
+        GPathInfo inner_bottom = (GPathInfo){.num_points = 14, .points = (GPoint []){
+          {w-layout_value(5), h-layout_value(2)-fracture_y_offset},
+          {w-layout_value(7), h+layout_value(3)},
+          {w-layout_value(5), h+layout_value(6)},
+          {w-layout_value(2), h+layout_value(8)},
+          {w+layout_value(2), h+layout_value(8)},
+          {w+layout_value(5), h+layout_value(6)},
+          {w+layout_value(7), h+layout_value(3)},
+          {w+layout_value(3), h-layout_value(2)-fracture_y_offset},
+          {w+layout_value(4), h-fracture_y_offset},
+          {w+layout_value(2), h-layout_value(2)-fracture_y_offset},
+          {w, h+layout_value(1)-fracture_y_offset},
+          {w-layout_value(1), h-layout_value(1)-fracture_y_offset},
+          {w-layout_value(3), h+layout_value(2)-fracture_y_offset},
+          {w-layout_value(4), h-fracture_y_offset}
+        }};
+        GPoint cut_points[] = {
+          {w-layout_value(7), h-layout_value(2)-fracture_y_offset},
+          {w-layout_value(6), h+layout_value(2)-fracture_y_offset},
+          {w-layout_value(4), h-layout_value(2)-fracture_y_offset},
+          {w-layout_value(3), h-fracture_y_offset},
+          {w-layout_value(1), h-layout_value(2)-fracture_y_offset},
+          {w+layout_value(1), h-layout_value(1)-fracture_y_offset},
+          {w+layout_value(2), h-layout_value(4)-fracture_y_offset},
+          {w+layout_value(3), h-layout_value(2)-fracture_y_offset},
+          {w+layout_value(4), h-layout_value(5)-fracture_y_offset},
+          {w+layout_value(5), h-layout_value(2)-fracture_y_offset},
+          {w+layout_value(5), h-layout_value(2)-fracture_y_offset}
+        };
+        GPath *path;
+        graphics_context_set_fill_color(gContext, strokeColor);
+        path = gpath_create(&outer_bottom);
+        gpath_draw_filled(gContext, path);
+        gpath_destroy(path);
+        graphics_context_set_fill_color(gContext, fillColor);
+        path = gpath_create(&inner_bottom);
+        gpath_draw_filled(gContext, path);
+        gpath_destroy(path);
+        // Draw the whole fracture last so no section is obscured by the fill.
+        graphics_context_set_stroke_color(gContext, strokeColor);
+        graphics_context_set_stroke_width(gContext, layout_value(1));
+        for (unsigned int i = 0; i < ARRAY_LENGTH(cut_points) - 1; i++) {
+          graphics_draw_line(gContext, cut_points[i], cut_points[i + 1]);
+        }
+        graphics_context_set_stroke_width(gContext, 1);
+        break;
+      }
+      GPathInfo outline = (GPathInfo){.num_points = 11, .points = (GPoint []){
+        {w, h-layout_value(10)},
+        {w-layout_value(5), h-layout_value(8)},
+        {w-layout_value(8), h-layout_value(3)},
+        {w-layout_value(9), h+layout_value(3)},
+        {w-layout_value(7), h+layout_value(8)},
+        {w-layout_value(3), h+layout_value(11)},
+        {w+layout_value(3), h+layout_value(11)},
+        {w+layout_value(7), h+layout_value(8)},
+        {w+layout_value(9), h+layout_value(3)},
+        {w+layout_value(8), h-layout_value(3)},
+        {w+layout_value(5), h-layout_value(8)}
+      }};
+      GPathInfo inner = (GPathInfo){.num_points = 11, .points = (GPoint []){
+        {w, h-layout_value(7)},
+        {w-layout_value(3), h-layout_value(6)},
+        {w-layout_value(6), h-layout_value(2)},
+        {w-layout_value(7), h+layout_value(3)},
+        {w-layout_value(5), h+layout_value(6)},
+        {w-layout_value(2), h+layout_value(8)},
+        {w+layout_value(2), h+layout_value(8)},
+        {w+layout_value(5), h+layout_value(6)},
+        {w+layout_value(7), h+layout_value(3)},
+        {w+layout_value(6), h-layout_value(2)},
+        {w+layout_value(3), h-layout_value(6)}
+      }};
+      GPath *path;
+      graphics_context_set_fill_color(gContext, strokeColor);
+      path = gpath_create(&outline);
+      gpath_draw_filled(gContext, path);
+      gpath_destroy(path);
+      graphics_context_set_fill_color(gContext, fillColor);
+      path = gpath_create(&inner);
+      gpath_draw_filled(gContext, path);
+      gpath_destroy(path);
+      break;
+    }
     case 12: {  // heart
       int w = currentWidth;
       int h = currentHeight;
@@ -579,10 +690,14 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
       strokeColor = palette.strokeDot;
       if(s_bufferTime[j][i] == 1){
         fillColor = palette.fillDot;
+      }else if(shape == 13){
+        // Keep both open and closed Easter eggs white.
+        fillColor = GColorWhite;
       }else{
         fillColor = palette.background;
       }
-      draw_shape(shape, currentWidth, currentHeight, gContext, strokeColor, fillColor);
+      draw_shape(shape, s_bufferTime[j][i] == 1, currentWidth, currentHeight,
+                 gContext, strokeColor, fillColor);
 
       // Prints texts
       currentHeight = s_layerRect[j].origin.y;
@@ -959,6 +1074,8 @@ void draw_date(GContext *gContext, Color palette){
       snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
     }else if(esternEgg == 3){
       snprintf(date_buffer, sizeof(date_buffer), "Be my Valentine!");
+    }else if(esternEgg == 4){
+      snprintf(date_buffer, sizeof(date_buffer), "Happy Easter!");
     }
   }
   //////////////////////////////////////////////////////////////////
@@ -1194,6 +1311,26 @@ void draw_snow(GContext *gContext, struct Flake *flakes, Layer *flake_layers[NUM
 
 void anim_stopped_handler(Animation *animation, bool finished, void *context) {}
 
+static bool is_easter_day(int year, int month, int day) {
+  // Meeus/Jones/Butcher Gregorian computus. Month is 1-based.
+  int a = year % 19;
+  int b = year / 100;
+  int c = year % 100;
+  int d = b / 4;
+  int e = b % 4;
+  int f = (b + 8) / 25;
+  int g = (b - f + 1) / 3;
+  int h = (19 * a + b - d - g + 15) % 30;
+  int i = c / 4;
+  int k = c % 4;
+  int l = (32 + 2 * e + 2 * i - h - k) % 7;
+  int m = (a + 11 * h + 22 * l) / 451;
+  int easter_month = (h + l - 7 * m + 114) / 31;
+  int easter_day = (h + l - 7 * m + 114) % 31 + 1;
+
+  return month == easter_month && day == easter_day;
+}
+
 int isEasterEggDay(){
   time_t now = time(NULL);
   struct tm *timeinfo = localtime(&now);
@@ -1204,6 +1341,9 @@ int isEasterEggDay(){
     return 2;
   }else if(timeinfo->tm_mon==1 && timeinfo->tm_mday==14){
     return 3;
+  }else if(is_easter_day(timeinfo->tm_year + 1900,
+                          timeinfo->tm_mon + 1, timeinfo->tm_mday)){
+    return 4;
   }
   return 0;
 }

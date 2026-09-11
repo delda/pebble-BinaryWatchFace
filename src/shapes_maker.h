@@ -15,7 +15,7 @@ struct Flake{
 };
 
 GPathInfo * draw_regular_shape(int number_of_sides, int w, int h, int radius);
-void draw_shape(int shape, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor);
+void draw_shape(int shape, bool is_active, int currentWidth, int currentHeight, GContext *gContext, GColor strokeColor, GColor fillColor);
 void fill_number(int number, GPoint position, GContext *gContext);
 void draw_number(int number, GPoint position, GContext *gContext);
 void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask corner_mask, Color palette);
