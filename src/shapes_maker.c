@@ -987,10 +987,19 @@ void draw_steps(GContext *gContext, Color palette, int steps) {
   #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
     show_heart_indicator = show_heart_rate;
   #endif
-  // The walking-person indicator is centred when alone; beside the heart its
-  // value extends to the right edge of the 144px design canvas.
+  // Beside the heart the value extends to the right edge of the 144px design
+  // canvas. The rectangular Health layouts centre the actual icon-and-value
+  // group after the value's width is known.
   int x = show_heart_indicator ? 76 : 30;
   int y = 102;
+  int steps_text_x = 19;
+  #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
+      defined(PBL_PLATFORM_FLINT)
+    // These layouts show only the step counter. Its horizontal position is
+    // set from the rendered value below.
+    y = 116;
+    steps_text_x = 20;
+  #endif
   #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
     y = 166;
   #elif defined(PBL_PLATFORM_EMERY)
@@ -1009,23 +1018,6 @@ void draw_steps(GContext *gContext, Color palette, int steps) {
     }
   #endif
 
-  // A walking-person pictogram is more immediately associated with a step
-  // counter than a generic shoe or footprint.
-  graphics_context_set_fill_color(gContext, palette.text);
-  graphics_context_set_stroke_color(gContext, palette.text);
-  graphics_fill_circle(gContext, layout_point(GPoint(x + 8, y + 3)), layout_value(2));
-  graphics_context_set_stroke_width(gContext, layout_value(2));
-  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 6)),
-                     layout_point(GPoint(x + 8, y + 11)));
-  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 7)),
-                     layout_point(GPoint(x + 3, y + 9)));
-  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 7)),
-                     layout_point(GPoint(x + 13, y + 8)));
-  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 11)),
-                     layout_point(GPoint(x + 4, y + 15)));
-  graphics_draw_line(gContext, layout_point(GPoint(x + 8, y + 11)),
-                     layout_point(GPoint(x + 13, y + 14)));
-
   char steps_buffer[12];
   snprintf(steps_buffer, sizeof(steps_buffer), "%d", steps);
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
@@ -1035,11 +1027,42 @@ void draw_steps(GContext *gContext, Color palette, int steps) {
   #ifdef PBL_PLATFORM_EMERY
     font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   #endif
+  #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
+      defined(PBL_PLATFORM_FLINT)
+    GSize text_size = graphics_text_layout_get_content_size(
+        steps_buffer, font, GRect(0, 0, 62, 26),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
+    // Position the step indicator group in the rectangular Health layouts.
+    x = (144 - (5 + text_size.w)) / 2 - 12;
+  #endif
+  int steps_icon_x = x;
+  #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
+      defined(PBL_PLATFORM_FLINT)
+    steps_icon_x += 2;
+  #endif
+
+  // A walking-person pictogram is more immediately associated with a step
+  // counter than a generic shoe or footprint.
+  graphics_context_set_fill_color(gContext, palette.text);
+  graphics_context_set_stroke_color(gContext, palette.text);
+  graphics_fill_circle(gContext, layout_point(GPoint(steps_icon_x + 8, y + 3)), layout_value(2));
+  graphics_context_set_stroke_width(gContext, layout_value(2));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 6)),
+                     layout_point(GPoint(steps_icon_x + 8, y + 11)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 7)),
+                     layout_point(GPoint(steps_icon_x + 3, y + 9)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 7)),
+                     layout_point(GPoint(steps_icon_x + 13, y + 8)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 11)),
+                     layout_point(GPoint(steps_icon_x + 4, y + 15)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 11)),
+                     layout_point(GPoint(steps_icon_x + 13, y + 14)));
   graphics_context_set_text_color(gContext, palette.text);
   graphics_draw_text(gContext,
                      steps_buffer,
                      font,
-                     layout_rect(GRect(x + 19, y + (show_heart_indicator ? -5 : -1),
+                     layout_rect(GRect(x + steps_text_x,
+                                       y + (show_heart_indicator ? -5 : -1),
                                        show_heart_indicator ? 49 : 62,
                                        show_heart_indicator ? 22 : 26)),
                      GTextOverflowModeTrailingEllipsis,
