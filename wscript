@@ -41,6 +41,9 @@ def build(ctx):
     cached_env = ctx.env
     for platform in ctx.env.TARGET_PLATFORMS:
         ctx.env = ctx.all_envs[platform]
+        # The SDK linker script intentionally maps application code and data in
+        # one segment.  Newer GNU ld versions warn about that fixed layout.
+        ctx.env.append_value('LINKFLAGS', ['-Wl,--no-warn-rwx-segments'])
         ctx.set_group(ctx.env.PLATFORM_NAME)
         app_elf = '{}/pebble-app.elf'.format(ctx.env.BUILD_DIR)
         ctx.pbl_build(source=ctx.path.ant_glob('src/**/*.c'),

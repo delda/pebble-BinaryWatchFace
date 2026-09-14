@@ -1,3 +1,1 @@
-#include <pebble.h>
-
-static int DEBUG = false;
+// Debug logging is configured by DEBUG in common.h.

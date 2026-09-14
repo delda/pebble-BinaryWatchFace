@@ -5,9 +5,6 @@
 
 #define NUM_FLAKES 100
 
-static GRect s_layerRect[2];
-static GBitmap *bt_bitmap_off = NULL;
-static GBitmap *bt_bitmap_on = NULL;
 struct Flake{
   GPoint pos;
   int size;

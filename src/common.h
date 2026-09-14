@@ -2,47 +2,47 @@
 #include <pebble.h>
 
 // Variabili per definire il tempo
-char bufferTime[20];
-unsigned int hour, minute;
-static char *s_textBase[]={"1","2","4","8","16","32"};
+extern char bufferTime[20];
+extern unsigned int hour, minute;
 
 // Variabili per definire i layer dell'orologio
-int s_bulletsNumber[2];
-int s_bufferTime[2][6];
+extern int s_bulletsNumber[2];
+extern int s_bufferTime[2][6];
 
 // Opzioni di visualizzazione dei componenti dell'orologio
-int shape;
-int color;
-int number;
-int bluetooth;
-int battery;
-int dotIndex;
-int date;
-int help_num;
-int snow;
-int show_heart_rate;
-int show_steps;
+extern int shape;
+extern int color;
+extern int number;
+extern int bluetooth;
+extern int battery;
+extern int dotIndex;
+extern int date;
+extern int help_num;
+extern int snow;
+extern int show_heart_rate;
+extern int show_steps;
 
 // Bluetooth
-int bluetooth_status;
-static int BT_NEVER         = 0;
-static int BT_ON_DISCONNECT = 1;
-static int BT_ALWAYS        = 2;
+extern int bluetooth_status;
+#define BT_NEVER 0
+#define BT_ON_DISCONNECT 1
+#define BT_ALWAYS 2
 
 // Battery
-int battery_level;
-int battery_option;
-int battery_modality;
-char battery_buffer[5];
-static int BA_NEVER           = 0;
-static int BA_UNDER_20_PERC   = 1;
-static int BA_ALWAYS          = 2;
-static int BA_PERCENT_WARNING = 30;
-static int BA_PERCENT_ALARM   = 10;
+extern int battery_level;
+extern int battery_option;
+extern int battery_modality;
+extern char battery_buffer[5];
+#define BA_NEVER 0
+#define BA_UNDER_20_PERC 1
+#define BA_ALWAYS 2
+#define BA_PERCENT_WARNING 30
 
 // Date string
-char date_buffer[30];
-char bufferLocale[6];
+extern char date_buffer[30];
+extern char bufferLocale[6];
+
+#define DEBUG 0
 
 // Struttura che contiene la paletta dei colori per ogni singola modalità
 typedef struct{

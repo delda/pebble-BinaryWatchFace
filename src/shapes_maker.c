@@ -3,9 +3,11 @@
 #include "shapes_maker.h"
 #include "common.h"
 
-#include "settings.c"
-
 static struct Flake tmp;
+static const char *s_textBase[] = {"1", "2", "4", "8", "16", "32"};
+static GRect s_layerRect[2];
+static GBitmap *bt_bitmap_off = NULL;
+static GBitmap *bt_bitmap_on = NULL;
 
 GPathInfo *draw_star(int number_of_sides, int w, int h, int radius){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);

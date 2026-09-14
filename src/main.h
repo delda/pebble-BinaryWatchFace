@@ -5,20 +5,6 @@
 
 static Window *s_window;             // main window view
 static Layer *s_mainLayer;           // bullets for hours
-static TextLayer *text[2][6];
-static TextLayer *s_backgrounLayer;
-static TextLayer *s_batteryLayer;  
-
-static AppSync sync;
-static uint8_t sync_buffer[32];
-
-static GColor backgroundColor;
-static GColor textColor;
-
-static bool isEasterEgg = 0;
-
-// bluetooth
-static BitmapLayer *bt_layer;
 // Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
 static const uint32_t segments[] = { 500, 500, 500 };
 VibePattern bt_vibe = {

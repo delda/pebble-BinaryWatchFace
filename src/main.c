@@ -4,8 +4,6 @@
 #include "shapes_maker.h"
 #include "common.h"
 
-#include "settings.c"
-
 static struct Flake s_flakes[NUM_FLAKES];
 static Layer *s_flake_layers[NUM_FLAKES];
 
