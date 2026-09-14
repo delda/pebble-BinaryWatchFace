@@ -5,6 +5,22 @@
 
 #define NUM_FLAKES 100
 
+enum BottomElement {
+  BOTTOM_BLUETOOTH,
+  BOTTOM_HEART_RATE,
+  BOTTOM_STEPS,
+  BOTTOM_BATTERY,
+  BOTTOM_ELEMENT_COUNT,
+};
+
+typedef struct {
+  int visible_count;
+  int x[BOTTOM_ELEMENT_COUNT];
+  int y[BOTTOM_ELEMENT_COUNT];
+  int steps_text_x_offset;
+  int steps_text_y_offset;
+} BottomLayout;
+
 struct Flake{
   GPoint pos;
   int size;
@@ -20,13 +36,15 @@ void draw_time_background(GContext *gContext, Color palette, unsigned int hour, 
 void draw_clock(GContext *gContext, Color palette, bool draw_numbers, int shape,
                 const int bullets_number[2], const int buffer_time[2][6]);
 void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_status,
-                    int battery_option, int battery_level, int color);
+                    int battery_option, int battery_level, int color,
+                    const BottomLayout *bottom_layout);
 void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
                   int bluetooth_status, int battery_level, int battery_modality,
-                  int easter_egg, Color palette);
+                  int easter_egg, const BottomLayout *bottom_layout, Color palette);
 void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
-                     bool show_steps);
-void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_rate);
+                     bool show_steps, const BottomLayout *bottom_layout);
+void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_rate,
+                const BottomLayout *bottom_layout);
 void draw_date(GContext *gContext, Color palette, int date_option, int easter_egg);
 void draw_snow(GContext *gContext, struct Flake *flakes, Layer *flake_layers[NUM_FLAKES]);
 void draw_flake(GContext *gContext, Layer *flake_layer, struct Flake flake);

@@ -737,7 +737,8 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers, int shape,
 }
 
 void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_status,
-                    int battery_option, int battery_level, int color){
+                    int battery_option, int battery_level, int color,
+                    const BottomLayout *bottom_layout){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   #if defined(PBL_PLATFORM_APLITE)
@@ -776,7 +777,10 @@ void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_stat
       // Emery's scaled destination is 14x23px.  Use the matching bitmap:
       // drawing the 10x15px asset in this larger rect makes Pebble tile it.
       h = 17;
-    #elif defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    #elif defined(PBL_PLATFORM_GABBRO)
+      x = bottom_layout->x[BOTTOM_BLUETOOTH];
+      y = bottom_layout->y[BOTTOM_BLUETOOTH];
+    #elif defined(PBL_PLATFORM_CHALK)
       x = 85;
       y = 140;
       if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
@@ -802,7 +806,7 @@ void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_stat
 
 void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
                   int bluetooth_status, int battery_level, int battery_modality,
-                  int easter_egg, Color palette){
+                  int easter_egg, const BottomLayout *bottom_layout, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   if(battery_option != BA_NEVER){
@@ -827,15 +831,18 @@ void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
 
   if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
     int x, y;
-    #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    #if defined(PBL_PLATFORM_GABBRO)
+      x = bottom_layout->x[BOTTOM_BATTERY];
+      y = bottom_layout->y[BOTTOM_BATTERY];
+    #elif defined(PBL_PLATFORM_CHALK)
       x = 80;
       y = 142;
     #else
       x = 115;
       y = 7;
     #endif
-    // if i display bluetooth image too, battery sign must shift right
-    #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+    // On Chalk, shift the battery when Bluetooth is also visible.
+    #if defined(PBL_PLATFORM_CHALK)
       if(bluetooth_option == BT_ALWAYS || (bluetooth_option == BT_ON_DISCONNECT && bluetooth_status == 0)){
         x += 20;
       }
@@ -911,7 +918,7 @@ void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
 }
 
 void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
-                     bool show_steps) {
+                     bool show_steps, const BottomLayout *bottom_layout) {
   // This function is called only for the HR-capable target displays. Keep the
   // indicator between the binary clock and date, or in the round display's
   // bottom strip.
@@ -921,7 +928,10 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
   // the "16" column of the second binary row on Emery.
   int x = show_steps ? 0 : 46;
   int y = 102;
-  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+  #if defined(PBL_PLATFORM_GABBRO)
+    x = bottom_layout->x[BOTTOM_HEART_RATE] - 15;
+    y = bottom_layout->y[BOTTOM_HEART_RATE];
+  #elif defined(PBL_PLATFORM_CHALK)
     y = 166;
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
@@ -993,7 +1003,8 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
                      NULL);
 }
 
-void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_rate) {
+void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_rate,
+                const BottomLayout *bottom_layout) {
   bool show_heart_indicator = false;
   #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
     show_heart_indicator = show_heart_rate;
@@ -1004,6 +1015,8 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
   int x = show_heart_indicator ? 76 : 30;
   int y = 102;
   int steps_text_x = 19;
+  int steps_text_x_offset = 0;
+  int steps_text_y_offset = 0;
   #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
       defined(PBL_PLATFORM_FLINT)
     // These layouts show only the step counter. Its horizontal position is
@@ -1011,7 +1024,12 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     y = 116;
     steps_text_x = 20;
   #endif
-  #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
+  #if defined(PBL_PLATFORM_GABBRO)
+    x = bottom_layout->x[BOTTOM_STEPS] - 5;
+    y = bottom_layout->y[BOTTOM_STEPS];
+    steps_text_x_offset = bottom_layout->steps_text_x_offset;
+    steps_text_y_offset = bottom_layout->steps_text_y_offset;
+  #elif defined(PBL_PLATFORM_CHALK)
     y = 166;
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
@@ -1020,17 +1038,13 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
       x = 74;
     }
   #endif
-  #ifdef PBL_PLATFORM_GABBRO
-    // Gabbro's 180px-wide screen uses a 13/9 horizontal scale. With both
-    // indicators visible, start the 68px step group at 56 so its value ends
-    // exactly at the right edge instead of being clipped beyond it.
-    if (show_heart_indicator) {
-      x = 56;
-    }
-  #endif
 
   char steps_buffer[12];
-  snprintf(steps_buffer, sizeof(steps_buffer), "%d", steps);
+  if (steps > 0) {
+    snprintf(steps_buffer, sizeof(steps_buffer), "%d", steps);
+  } else {
+    snprintf(steps_buffer, sizeof(steps_buffer), "-");
+  }
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
   #ifdef PBL_PLATFORM_GABBRO
     font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
@@ -1072,8 +1086,8 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
   graphics_draw_text(gContext,
                      steps_buffer,
                      font,
-                     layout_rect(GRect(x + steps_text_x,
-                                       y + (show_heart_indicator ? -5 : -1),
+                     layout_rect(GRect(x + steps_text_x + steps_text_x_offset,
+                                       y + (show_heart_indicator ? -5 : -1) + steps_text_y_offset,
                                        show_heart_indicator ? 49 : 62,
                                        show_heart_indicator ? 22 : 26)),
                      GTextOverflowModeTrailingEllipsis,

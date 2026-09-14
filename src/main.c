@@ -50,7 +50,9 @@ static void battery_callback(BatteryChargeState state) {
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   battery_level = (int)state.charge_percent;
-  layer_mark_dirty(s_mainLayer);
+  if (s_mainLayer != NULL) {
+    layer_mark_dirty(s_mainLayer);
+  }
 }
 
 static void bluetooth_handler(bool connected){
@@ -61,7 +63,9 @@ static void bluetooth_handler(bool connected){
     vibes_enqueue_custom_pattern(bt_vibe);
   }
 
-  layer_mark_dirty(s_mainLayer);
+  if (s_mainLayer != NULL) {
+    layer_mark_dirty(s_mainLayer);
+  }
 }
 
 static void health_values_changed(void) {
@@ -150,7 +154,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // Get next pair, if any
     t = dict_read_next(iterator);
   }
-  layer_mark_dirty(s_mainLayer);
+  // A companion message can arrive while the window is still being created.
+  // Do not try to redraw before window_load() has allocated the layer.
+  if (s_mainLayer != NULL) {
+    layer_mark_dirty(s_mainLayer);
+  }
 }
 
 static void inbox_dropped_callback(AppMessageResult app_message_error, void *context) {
@@ -262,6 +270,7 @@ static void window_unload(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   layer_destroy(s_mainLayer);
+  s_mainLayer = NULL;
 }
 
 static void init(){
