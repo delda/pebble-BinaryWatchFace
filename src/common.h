@@ -15,7 +15,6 @@ extern int color;
 extern int number;
 extern int bluetooth;
 extern int battery;
-extern int dotIndex;
 extern int date;
 extern int help_num;
 extern int snow;
@@ -30,18 +29,13 @@ extern int bluetooth_status;
 
 // Battery
 extern int battery_level;
-extern int battery_option;
 extern int battery_modality;
-extern char battery_buffer[5];
 #define BA_NEVER 0
 #define BA_UNDER_20_PERC 1
 #define BA_ALWAYS 2
 #define BA_PERCENT_WARNING 30
 
 // Date string
-extern char date_buffer[30];
-extern char bufferLocale[6];
-
 #define DEBUG 0
 
 // Struttura che contiene la paletta dei colori per ogni singola modalità

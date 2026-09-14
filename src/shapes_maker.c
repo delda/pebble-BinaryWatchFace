@@ -8,6 +8,9 @@ static const char *s_textBase[] = {"1", "2", "4", "8", "16", "32"};
 static GRect s_layerRect[2];
 static GBitmap *bt_bitmap_off = NULL;
 static GBitmap *bt_bitmap_on = NULL;
+static char date_buffer[30];
+
+static void get_date_format(int dateKey);
 
 GPathInfo *draw_star(int number_of_sides, int w, int h, int radius){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
@@ -613,7 +616,7 @@ void draw_background(GContext *gContext, uint16_t corner_radius, GCornerMask cor
 
 }
 
-void draw_time_background(GContext *gContext, Color palette){
+void draw_time_background(GContext *gContext, Color palette, unsigned int hour, unsigned int minute){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
@@ -642,7 +645,8 @@ void draw_time_background(GContext *gContext, Color palette){
   #endif
 }
 
-void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
+void draw_clock(GContext *gContext, Color palette, bool drawNumbers, int shape,
+                const int bullets_number[2], const int buffer_time[2][6]){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   int currentWidth, currentHeight;
@@ -663,20 +667,20 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   graphics_context_set_stroke_color(gContext, palette.strokeDot);
   for(int j=0; j<2; j++){
     // trick to simulate the round function
-    widthSingleLayer = (int)(s_layerRect[j].size.w/(s_bulletsNumber[j]-1));
-    int wRest = s_layerRect[j].size.w%(s_bulletsNumber[j]-1);
-    if(wRest > (s_bulletsNumber[j]-1)/2){
+    widthSingleLayer = (int)(s_layerRect[j].size.w/(bullets_number[j]-1));
+    int wRest = s_layerRect[j].size.w%(bullets_number[j]-1);
+    if(wRest > (bullets_number[j]-1)/2){
       widthSingleLayer++;
     }
 
-    for(int i=0; i<s_bulletsNumber[j]; i++){
+    for(int i=0; i<bullets_number[j]; i++){
       // Defines the bullets position width
-      if(i == (s_bulletsNumber[j] - 1)){
+      if(i == (bullets_number[j] - 1)){
         currentWidth = s_layerRect[j].origin.x;
       }else if(i == 0){
         currentWidth = s_layerRect[j].origin.x + s_layerRect[j].size.w;
       }else{
-        currentWidth = s_layerRect[j].origin.x + widthSingleLayer * (s_bulletsNumber[j] - i - 1);
+        currentWidth = s_layerRect[j].origin.x + widthSingleLayer * (bullets_number[j] - i - 1);
       }
       currentWidth -= 1;
       // Very simple define of height
@@ -690,7 +694,7 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
       // Draws the dots
       GColor strokeColor, fillColor;
       strokeColor = palette.strokeDot;
-      if(s_bufferTime[j][i] == 1){
+      if(buffer_time[j][i] == 1){
         fillColor = palette.fillDot;
       }else if(shape == 13){
         // Keep both open and closed Easter eggs white.
@@ -698,7 +702,7 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
       }else{
         fillColor = palette.background;
       }
-      draw_shape(shape, s_bufferTime[j][i] == 1, currentWidth, currentHeight,
+      draw_shape(shape, buffer_time[j][i] == 1, currentWidth, currentHeight,
                  gContext, strokeColor, fillColor);
 
       // Prints texts
@@ -732,7 +736,8 @@ void draw_clock(GContext *gContext, Color palette, bool drawNumbers){
   }
 }
 
-void draw_bluetooth(GContext *gContext){
+void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_status,
+                    int battery_option, int battery_level, int color){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   #if defined(PBL_PLATFORM_APLITE)
@@ -752,7 +757,7 @@ void draw_bluetooth(GContext *gContext){
       bt_bitmap_on = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH_ON_IMG);
   #endif
 
-  if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
+  if(bluetooth_option == BT_ALWAYS || (bluetooth_option == BT_ON_DISCONNECT && bluetooth_status == 0)){
     int x = 7;
     int y = 7;
     int w = 10;
@@ -774,7 +779,7 @@ void draw_bluetooth(GContext *gContext){
     #elif defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       x = 85;
       y = 140;
-      if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
+      if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
         x -= 20;
       }
     #endif
@@ -795,16 +800,18 @@ void draw_bluetooth(GContext *gContext){
   }
 }
 
-void draw_battery(GContext *gContext, int battery, Color palette){
+void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
+                  int bluetooth_status, int battery_level, int battery_modality,
+                  int easter_egg, Color palette){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  if(battery != BA_NEVER){
+  if(battery_option != BA_NEVER){
     GColor batteryColor;
       #if defined(PBL_PLATFORM_APLITE) || defined(PBL_PLATFORM_FLINT)
       batteryColor = palette.text;
     #else
       if(battery_level < BA_PERCENT_WARNING){
-        if(isEasterEggDay()){
+        if(easter_egg){
           batteryColor = palette.text;
         }else{
           batteryColor = GColorRed;
@@ -818,7 +825,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     graphics_context_set_text_color(gContext, batteryColor);
   }
 
-  if((battery == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery == BA_ALWAYS){
+  if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
     int x, y;
     #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
       x = 80;
@@ -829,7 +836,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
     #endif
     // if i display bluetooth image too, battery sign must shift right
     #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
-      if(bluetooth == BT_ALWAYS || (bluetooth == BT_ON_DISCONNECT && bluetooth_status == 0)){
+      if(bluetooth_option == BT_ALWAYS || (bluetooth_option == BT_ON_DISCONNECT && bluetooth_status == 0)){
         x += 20;
       }
     #endif
@@ -889,6 +896,7 @@ void draw_battery(GContext *gContext, int battery, Color palette){
       #else
         GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
       #endif
+      char battery_buffer[5];
       snprintf(battery_buffer, sizeof(battery_buffer), "%d%%", battery_level);
       graphics_draw_text(gContext,
                          battery_buffer,
@@ -902,7 +910,8 @@ void draw_battery(GContext *gContext, int battery, Color palette){
   }
 }
 
-void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm) {
+void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
+                     bool show_steps) {
   // This function is called only for the HR-capable target displays. Keep the
   // indicator between the binary clock and date, or in the round display's
   // bottom strip.
@@ -984,7 +993,7 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm) 
                      NULL);
 }
 
-void draw_steps(GContext *gContext, Color palette, int steps) {
+void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_rate) {
   bool show_heart_indicator = false;
   #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
     show_heart_indicator = show_heart_rate;
@@ -1072,34 +1081,33 @@ void draw_steps(GContext *gContext, Color palette, int steps) {
                      NULL);
 }
 
-void draw_date(GContext *gContext, Color palette){
+void draw_date(GContext *gContext, Color palette, int date_option, int easter_egg){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
-  get_date_format(date);
+  get_date_format(date_option);
   int x;
   int y;
   int w;
-  int h = (date > 28 && !isEasterEggDay()) ? 120 : 136;
+  int h = (date_option > 28 && !easter_egg) ? 120 : 136;
   #if defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_GABBRO)
     x = 24;
-    y = (date > 28) ? 5 : 20;
+    y = (date_option > 28) ? 5 : 20;
     w = 132;
   #else
     x = 0;
-    y = (date > 28 && !isEasterEggDay()) ? 120 : 136;
+    y = (date_option > 28 && !easter_egg) ? 120 : 136;
     w = 144;
   #endif
   y += 3;
   GRect rect = layout_rect(GRect(x, y, w, h));
-  int esternEgg = isEasterEggDay();
-  if(esternEgg != 0){
-    if(esternEgg == 1){
+  if(easter_egg != 0){
+    if(easter_egg == 1){
       snprintf(date_buffer, sizeof(date_buffer), "Merry Christmas!");
-    }else if(esternEgg == 2){
+    }else if(easter_egg == 2){
       snprintf(date_buffer, sizeof(date_buffer), "Happy new year!");
-    }else if(esternEgg == 3){
+    }else if(easter_egg == 3){
       snprintf(date_buffer, sizeof(date_buffer), "Be my Valentine!");
-    }else if(esternEgg == 4){
+    }else if(easter_egg == 4){
       snprintf(date_buffer, sizeof(date_buffer), "Happy Easter!");
     }
   }
@@ -1125,7 +1133,7 @@ void draw_date(GContext *gContext, Color palette){
                     );
 }
 
-void get_date_format(int dateKey){
+static void get_date_format(int dateKey){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
 
   time_t rawtime;

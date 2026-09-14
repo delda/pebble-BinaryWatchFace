@@ -9,7 +9,6 @@ int color;
 int number;
 int bluetooth;
 int battery;
-int dotIndex;
 int date;
 int help_num;
 int snow;
@@ -17,11 +16,7 @@ int show_heart_rate;
 int show_steps;
 int bluetooth_status;
 int battery_level;
-int battery_option;
 int battery_modality;
-char battery_buffer[5];
-char date_buffer[30];
-char bufferLocale[6];
 
 char *logTime(){
   time_t now = time(NULL);

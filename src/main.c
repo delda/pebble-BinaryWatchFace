@@ -201,8 +201,33 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 
 static void update_view(Layer *layer, GContext *gContext){
   (void)layer;
-  render_watchface(gContext, palette, health_get_heart_rate(),
-                   health_get_steps(), s_flakes, s_flake_layers);
+  RenderState state = {
+    .hour = hour,
+    .minute = minute,
+    .bullets_number = {s_bulletsNumber[0], s_bulletsNumber[1]},
+    .buffer_time = {
+      {s_bufferTime[0][0], s_bufferTime[0][1], s_bufferTime[0][2],
+       s_bufferTime[0][3], s_bufferTime[0][4], s_bufferTime[0][5]},
+      {s_bufferTime[1][0], s_bufferTime[1][1], s_bufferTime[1][2],
+       s_bufferTime[1][3], s_bufferTime[1][4], s_bufferTime[1][5]},
+    },
+    .shape = shape,
+    .color = color,
+    .number = number,
+    .bluetooth = bluetooth,
+    .bluetooth_status = bluetooth_status,
+    .battery = battery,
+    .battery_level = battery_level,
+    .battery_modality = battery_modality,
+    .date = date,
+    .help_num = help_num,
+    .snow = snow,
+    .show_heart_rate = show_heart_rate,
+    .show_steps = show_steps,
+    .heart_rate_bpm = health_get_heart_rate(),
+    .steps_today = health_get_steps(),
+  };
+  render_watchface(gContext, palette, &state, s_flakes, s_flake_layers);
 }
 
 static void window_load(Window *window){
@@ -241,8 +266,6 @@ static void window_unload(){
 
 static void init(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
-
-  snprintf(bufferLocale, sizeof(bufferLocale), "%s", i18n_get_system_locale());
 
   // Create the window before accessing its root layer below.
   s_window = window_create();

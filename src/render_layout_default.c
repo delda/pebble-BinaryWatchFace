@@ -9,7 +9,7 @@ void render_layout_draw_health_indicators(GContext *gContext, Color palette,
   (void)heart_rate_bpm;
 #if defined(PBL_HEALTH)
   if (show_steps) {
-    draw_steps(gContext, palette, steps_today);
+    draw_steps(gContext, palette, steps_today, show_heart_rate);
   }
 #else
   (void)gContext;
