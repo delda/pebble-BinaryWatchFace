@@ -1035,7 +1035,10 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     y = 118;
     if (show_heart_indicator) {
       // Keep the right side free for the step total after the weather block.
-      x = 80;
+      // This is 15 physical pixels to the right of the initial Emery position.
+      x = 91;
+      // Two design pixels correspond to three physical Emery pixels.
+      steps_text_x -= 2;
     }
   #endif
 
