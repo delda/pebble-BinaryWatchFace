@@ -936,8 +936,8 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
     if (show_steps) {
-      // The heart centre is x + 7. The "16" column is centred at x = 40.
-      x = 33;
+      // Reserve the centre of Emery's health row for the weather indicator.
+      x = 3;
     }
   #endif
 
@@ -1034,8 +1034,8 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
     if (show_heart_indicator) {
-      // The walking-person centre is x + 8. The "4" column is x = 82.
-      x = 74;
+      // Keep the right side free for the step total after the weather block.
+      x = 80;
     }
   #endif
 

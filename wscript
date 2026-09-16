@@ -32,7 +32,7 @@ def build(ctx):
             ctx.fatal("\nJavaScript linting failed (you can disable this in Project Settings):\n" + e.stdout)
 
     # Bundle CommonJS JavaScript and JSON configuration files.
-    js_paths = ctx.path.ant_glob(['src/js/**/*.js', 'src/js/**/*.json'])
+    js_paths = ctx.path.ant_glob(['src/pkjs/**/*.js', 'src/js/**/*.json'])
 
     ctx.load('pebble_sdk')
 
@@ -63,4 +63,4 @@ def build(ctx):
     ctx.set_group('bundle')
     ctx.pbl_bundle(binaries=binaries,
                    js=js_paths,
-                   js_entry_file='src/js/app.js')
+                   js_entry_file='src/pkjs/index.js')

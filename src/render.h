@@ -24,6 +24,7 @@ typedef struct {
   int show_steps;
   int heart_rate_bpm;
   int steps_today;
+  bool weather_enabled;
 } RenderState;
 
 void render_watchface(GContext *gContext, Color palettes[], const RenderState *state,

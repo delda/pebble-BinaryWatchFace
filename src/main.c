@@ -1,5 +1,6 @@
 #include "main.h"
 #include "health.h"
+#include "weather.h"
 #include "render.h"
 #include "shapes_maker.h"
 #include "common.h"
@@ -72,6 +73,16 @@ static void health_values_changed(void) {
   if (s_mainLayer != NULL) {
     layer_mark_dirty(s_mainLayer);
   }
+}
+
+static void send_weather_service_state(void) {
+  DictionaryIterator *iterator;
+  if (app_message_outbox_begin(&iterator) != APP_MSG_OK) {
+    return;
+  }
+  dict_write_uint8(iterator, WEATHER_ENABLED_KEY, weather_is_enabled());
+  dict_write_end(iterator);
+  app_message_outbox_send();
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -149,6 +160,22 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         persist_write_int(STEPS_KEY, show_steps);
         health_set_enabled(show_heart_rate, show_steps);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "steps: %d", show_steps);
+        break;
+      case WEATHER_ENABLED_KEY:
+        weather_set_enabled(t->value->uint8 != 0);
+        send_weather_service_state();
+        break;
+      case WEATHER_TEMPERATURE_KEY:
+        weather_set_temperature(t->value->int32);
+        break;
+      case WEATHER_FORECAST_ICON_KEY:
+        weather_set_forecast_icon(t->value->uint8);
+        break;
+      case WEATHER_UPDATED_AT_KEY:
+        weather_set_updated_at(t->value->int32);
+        break;
+      case WEATHER_REQUEST_KEY:
+        send_weather_service_state();
         break;
     }
     // Get next pair, if any
@@ -234,6 +261,7 @@ static void update_view(Layer *layer, GContext *gContext){
     .show_steps = show_steps,
     .heart_rate_bpm = health_get_heart_rate(),
     .steps_today = health_get_steps(),
+    .weather_enabled = weather_is_enabled(),
   };
   render_watchface(gContext, palette, &state, s_flakes, s_flake_layers);
 }
@@ -264,6 +292,7 @@ static void window_load(Window *window){
 
   health_init(health_values_changed);
   health_set_enabled(show_heart_rate, show_steps);
+  send_weather_service_state();
 }
 
 static void window_unload(){
@@ -300,6 +329,7 @@ static void init(){
   snow = 0;
   show_heart_rate = 1;
   show_steps = 1;
+  weather_init();
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);
     shape = shape % SHAPE_NUM;
@@ -412,6 +442,7 @@ static void deinit(){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
   
   health_deinit();
+  weather_deinit();
 
   // Destroy Window
   window_destroy(s_window);

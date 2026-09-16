@@ -24,6 +24,11 @@ enum appParameters {
   SNOW_KEY        = 0x8,
   HEART_RATE_KEY  = 0x9,
   STEPS_KEY       = 0xA,
+  WEATHER_ENABLED_KEY = 0xB,
+  WEATHER_TEMPERATURE_KEY = 0xC,
+  WEATHER_FORECAST_ICON_KEY = 0xD,
+  WEATHER_UPDATED_AT_KEY = 0xE,
+  WEATHER_REQUEST_KEY = 0xF,
 };
 
 static int SHAPE_NUM = 13;

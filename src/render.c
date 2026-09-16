@@ -1,5 +1,9 @@
 #include "render.h"
 #include "render_layout.h"
+#include "weather.h"
+#if defined(PBL_PLATFORM_EMERY)
+#include "render_weather_emery.h"
+#endif
 
 static bool bottom_element_is_visible(const RenderState *state, enum BottomElement element) {
   switch (element) {
@@ -139,6 +143,12 @@ void render_watchface(GContext *gContext, Color palettes[], const RenderState *s
   render_layout_draw_health_indicators(gContext, palette, render_state.show_heart_rate,
                                         render_state.show_steps, render_state.heart_rate_bpm,
                                         render_state.steps_today, &bottom_layout);
+
+#if defined(PBL_PLATFORM_EMERY)
+  if (render_state.weather_enabled) {
+    render_weather_emery(gContext, palette, weather_get_data());
+  }
+#endif
 
   if (easter_egg == 1 || easter_egg == 2 || render_state.snow) {
     for (int i = 0; i < NUM_FLAKES; i++) {

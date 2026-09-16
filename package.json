@@ -118,7 +118,12 @@
       "HELP_NUM_KEY": 7,
       "SNOW_KEY": 8,
       "HEART_RATE_KEY": 9,
-      "STEPS_KEY": 10
+      "STEPS_KEY": 10,
+      "WEATHER_ENABLED_KEY": 11,
+      "WEATHER_TEMPERATURE_KEY": 12,
+      "WEATHER_FORECAST_ICON_KEY": 13,
+      "WEATHER_UPDATED_AT_KEY": 14,
+      "WEATHER_REQUEST_KEY": 15
     }
   }
 }
