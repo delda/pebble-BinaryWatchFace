@@ -941,7 +941,12 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
     }
   #endif
 
-  graphics_context_set_fill_color(gContext, palette.text);
+  // Keep the health icon visually distinct from its numeric value.
+  GColor heart_color = palette.text;
+  #ifdef PBL_COLOR
+    heart_color = GColorRed;
+  #endif
+  graphics_context_set_fill_color(gContext, heart_color);
   const int radius = layout_value(4);
   graphics_fill_circle(gContext, layout_point(GPoint(x + 4, y + 5)), radius);
   graphics_fill_circle(gContext, layout_point(GPoint(x + 10, y + 5)), radius);
@@ -1071,8 +1076,9 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
 
   // A walking-person pictogram is more immediately associated with a step
   // counter than a generic shoe or footprint.
-  graphics_context_set_fill_color(gContext, palette.text);
-  graphics_context_set_stroke_color(gContext, palette.text);
+  // Keep the walking-person pictogram black in every colour theme.
+  graphics_context_set_fill_color(gContext, GColorBlack);
+  graphics_context_set_stroke_color(gContext, GColorBlack);
   graphics_fill_circle(gContext, layout_point(GPoint(steps_icon_x + 8, y + 3)), layout_value(2));
   graphics_context_set_stroke_width(gContext, layout_value(2));
   graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 6)),
