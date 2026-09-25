@@ -4,6 +4,12 @@ static HealthUpdateCallback s_update_callback;
 static int s_heart_rate_bpm;
 static int s_steps_today;
 
+// Temporary Diorite layout fixture. Remove this block once the layout has
+// been approved so the watchface always shows the Health service values.
+#define DIORITE_LAYOUT_TEST_MODE 1
+#define DIORITE_LAYOUT_TEST_BPM 110
+#define DIORITE_LAYOUT_TEST_STEPS 13957
+
 #if defined(PBL_HEALTH)
 static bool s_subscription_active;
 static bool s_heart_rate_enabled;
@@ -103,9 +109,17 @@ void health_set_enabled(bool heart_rate_enabled, bool steps_enabled) {
 }
 
 int health_get_heart_rate(void) {
+#if defined(PBL_PLATFORM_DIORITE) && DIORITE_LAYOUT_TEST_MODE
+  return DIORITE_LAYOUT_TEST_BPM;
+#else
   return s_heart_rate_bpm;
+#endif
 }
 
 int health_get_steps(void) {
+#if defined(PBL_PLATFORM_DIORITE) && DIORITE_LAYOUT_TEST_MODE
+  return DIORITE_LAYOUT_TEST_STEPS;
+#else
   return s_steps_today;
+#endif
 }

@@ -4,6 +4,12 @@
 #if defined(PBL_PLATFORM_EMERY)
 #include "render_weather_emery.h"
 #endif
+#if defined(PBL_PLATFORM_GABBRO)
+#include "render_weather_gabbro.h"
+#endif
+#if defined(PBL_PLATFORM_DIORITE)
+#include "render_weather_diorite.h"
+#endif
 
 static bool bottom_element_is_visible(const RenderState *state, enum BottomElement element) {
   switch (element) {
@@ -18,83 +24,20 @@ static bool bottom_element_is_visible(const RenderState *state, enum BottomEleme
       return (state->battery == BA_UNDER_20_PERC &&
               state->battery_level < BA_PERCENT_WARNING) ||
              state->battery == BA_ALWAYS;
+    case BOTTOM_WEATHER:
+      return state->weather_enabled;
     default:
       return false;
   }
 }
 
-static int bottom_element_x_from_center(enum BottomElement element, int center_x) {
-  static const int left_offset[BOTTOM_ELEMENT_COUNT] = {5, 26, 13, 12};
-  return center_x - left_offset[element];
-}
-
 static BottomLayout bottom_layout_create(const RenderState *state) {
   BottomLayout layout = {0};
-  enum BottomElement visible[BOTTOM_ELEMENT_COUNT];
+  bool visible[BOTTOM_ELEMENT_COUNT] = {false};
   for (int element = 0; element < BOTTOM_ELEMENT_COUNT; element++) {
-    if (bottom_element_is_visible(state, (enum BottomElement)element)) {
-      visible[layout.visible_count++] = (enum BottomElement)element;
-    }
+    visible[element] = bottom_element_is_visible(state, (enum BottomElement)element);
   }
-
-  // Defaults for a single item: centre its visual group on the lower row.
-  int centers[BOTTOM_ELEMENT_COUNT] = {90, 90, 90, 90};
-  int row_y = 135;
-  if (layout.visible_count == 2) {
-    centers[0] = 70;
-    centers[1] = 112;
-  } else if (layout.visible_count == 3) {
-    centers[0] = 47;
-    centers[1] = 90;
-    centers[2] = 140;
-  } else if (layout.visible_count == 4) {
-    // Four equally spaced centres in the lower band.
-    centers[0] = 30;
-    centers[1] = 70;
-    centers[2] = 110;
-    centers[3] = 150;
-  }
-
-  for (int index = 0; index < layout.visible_count; index++) {
-    enum BottomElement element = visible[index];
-    layout.x[element] = bottom_element_x_from_center(element, centers[index]);
-    layout.y[element] = row_y;
-  }
-
-  // Preserve the established two-item Bluetooth/battery coordinates exactly.
-  if (layout.visible_count == 2 &&
-      bottom_element_is_visible(state, BOTTOM_BLUETOOTH) &&
-      bottom_element_is_visible(state, BOTTOM_BATTERY)) {
-    layout.x[BOTTOM_BLUETOOTH] = 65;
-    layout.y[BOTTOM_BLUETOOTH] = 140;
-    layout.x[BOTTOM_BATTERY] = 100;
-    layout.y[BOTTOM_BATTERY] = 142;
-  }
-
-  // Preserve the approved three-item Bluetooth/steps/battery layout.
-  if (layout.visible_count == 3 &&
-      bottom_element_is_visible(state, BOTTOM_BLUETOOTH) &&
-      bottom_element_is_visible(state, BOTTOM_STEPS) &&
-      bottom_element_is_visible(state, BOTTOM_BATTERY)) {
-    layout.x[BOTTOM_BLUETOOTH] = 42;
-    layout.y[BOTTOM_BLUETOOTH] = 135;
-    layout.x[BOTTOM_STEPS] = 77;
-    layout.y[BOTTOM_STEPS] = 135;
-    layout.steps_text_y_offset = 5;
-    layout.x[BOTTOM_BATTERY] = 128;
-    layout.y[BOTTOM_BATTERY] = 137;
-  }
-  if (layout.visible_count == 4) {
-    // These are origins, rather than centres: compensate for each element's
-    // different visual width so their visible icons/groups are evenly spaced.
-    layout.x[BOTTOM_BLUETOOTH] = 30;
-    layout.x[BOTTOM_HEART_RATE] = 62;
-    layout.x[BOTTOM_STEPS] = 86;
-    layout.x[BOTTOM_BATTERY] = 129;
-    layout.steps_text_x_offset = -2;
-    layout.steps_text_y_offset = 5;
-    layout.y[BOTTOM_BATTERY] += 2;
-  }
+  bottom_layout_calculate(visible, &layout);
   return layout;
 }
 
@@ -147,6 +90,16 @@ void render_watchface(GContext *gContext, Color palettes[], const RenderState *s
 #if defined(PBL_PLATFORM_EMERY)
   if (render_state.weather_enabled) {
     render_weather_emery(gContext, palette, weather_get_data());
+  }
+#endif
+#if defined(PBL_PLATFORM_GABBRO)
+  if (render_state.weather_enabled) {
+    render_weather_gabbro(gContext, palette, weather_get_data(), &bottom_layout);
+  }
+#endif
+#if defined(PBL_PLATFORM_DIORITE)
+  if (render_state.weather_enabled) {
+    render_weather_diorite(gContext, palette, weather_get_data());
   }
 #endif
 

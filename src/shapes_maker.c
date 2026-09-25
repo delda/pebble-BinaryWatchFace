@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include <math.h>
 #include "shapes_maker.h"
+#include "diorite_info_layout.h"
 #include "common.h"
 
 static struct Flake tmp;
@@ -778,7 +779,8 @@ void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_stat
       // drawing the 10x15px asset in this larger rect makes Pebble tile it.
       h = 17;
     #elif defined(PBL_PLATFORM_GABBRO)
-      x = bottom_layout->x[BOTTOM_BLUETOOTH];
+      x = bottom_layout->x[BOTTOM_BLUETOOTH] +
+          (bottom_layout->slot_width[BOTTOM_BLUETOOTH] - 10) / 2;
       y = bottom_layout->y[BOTTOM_BLUETOOTH];
     #elif defined(PBL_PLATFORM_CHALK)
       x = 85;
@@ -832,7 +834,8 @@ void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
   if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
     int x, y;
     #if defined(PBL_PLATFORM_GABBRO)
-      x = bottom_layout->x[BOTTOM_BATTERY];
+      x = bottom_layout->x[BOTTOM_BATTERY] +
+          (bottom_layout->slot_width[BOTTOM_BATTERY] - 24) / 2;
       y = bottom_layout->y[BOTTOM_BATTERY];
     #elif defined(PBL_PLATFORM_CHALK)
       x = 80;
@@ -926,10 +929,26 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
   // reference layout; centre that group horizontally on each display.
   // The heart indicator occupies 52px. Centre it alone, or align its icon to
   // the "16" column of the second binary row on Emery.
+  char heart_rate_buffer[4];
+  if (heart_rate_bpm > 0) {
+    snprintf(heart_rate_buffer, sizeof(heart_rate_buffer), "%u",
+             (unsigned int)heart_rate_bpm);
+  } else {
+    snprintf(heart_rate_buffer, sizeof(heart_rate_buffer), "-");
+  }
   int x = show_steps ? 0 : 46;
   int y = 102;
+  #if defined(PBL_PLATFORM_DIORITE)
+    DioriteInfoLayout diorite_layout = diorite_info_layout_get();
+    int group_width = diorite_layout.compact ? 46 : 52;
+    x = diorite_layout.heart_rate_center - group_width / 2;
+    y = 116;
+  #endif
   #if defined(PBL_PLATFORM_GABBRO)
-    x = bottom_layout->x[BOTTOM_HEART_RATE] - 15;
+    // The slot's left edge is the element's start position. Do not centre
+    // the fixed 52px BPM artwork again, otherwise changing the reserved slot
+    // width cancels out and produces the same x coordinate every time.
+    x = bottom_layout->x[BOTTOM_HEART_RATE];
     y = bottom_layout->y[BOTTOM_HEART_RATE];
   #elif defined(PBL_PLATFORM_CHALK)
     y = 166;
@@ -966,15 +985,11 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
     gpath_destroy(heart);
   }
 
-  char heart_rate_buffer[4];
-  if (heart_rate_bpm > 0) {
-    snprintf(heart_rate_buffer, sizeof(heart_rate_buffer), "%u",
-             (unsigned int)heart_rate_bpm);
-  } else {
-    snprintf(heart_rate_buffer, sizeof(heart_rate_buffer), "-");
-  }
   int text_y = y;
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
+  #ifdef PBL_PLATFORM_DIORITE
+    font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  #endif
   #ifdef PBL_PLATFORM_GABBRO
     font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
   #endif
@@ -999,6 +1014,18 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
     return;
   }
   #endif
+  #if defined(PBL_PLATFORM_DIORITE)
+  int heart_rate_width = diorite_layout.compact ? 30 : 34;
+  int heart_rate_x = x + (diorite_layout.compact ? 16 : 18);
+  graphics_draw_text(gContext,
+                     heart_rate_buffer,
+                     font,
+                     layout_rect(GRect(heart_rate_x, text_y, heart_rate_width, 24)),
+                     GTextOverflowModeTrailingEllipsis,
+                     GTextAlignmentLeft,
+                     NULL);
+  return;
+  #endif
   graphics_draw_text(gContext,
                      heart_rate_buffer,
                      font,
@@ -1011,7 +1038,8 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
 void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_rate,
                 const BottomLayout *bottom_layout) {
   bool show_heart_indicator = false;
-  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO) || \
+      defined(PBL_PLATFORM_DIORITE)
     show_heart_indicator = show_heart_rate;
   #endif
   // Beside the heart the value extends to the right edge of the 144px design
@@ -1030,7 +1058,8 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     steps_text_x = 20;
   #endif
   #if defined(PBL_PLATFORM_GABBRO)
-    x = bottom_layout->x[BOTTOM_STEPS] - 5;
+    x = bottom_layout->x[BOTTOM_STEPS] +
+        (bottom_layout->slot_width[BOTTOM_STEPS] - 62) / 2;
     y = bottom_layout->y[BOTTOM_STEPS];
     steps_text_x_offset = bottom_layout->steps_text_x_offset;
     steps_text_y_offset = bottom_layout->steps_text_y_offset;
@@ -1054,6 +1083,9 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     snprintf(steps_buffer, sizeof(steps_buffer), "-");
   }
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
+  #ifdef PBL_PLATFORM_DIORITE
+    font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  #endif
   #ifdef PBL_PLATFORM_GABBRO
     font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
   #endif
@@ -1062,11 +1094,21 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
   #endif
   #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
       defined(PBL_PLATFORM_FLINT)
+    #if defined(PBL_PLATFORM_DIORITE)
+    DioriteInfoLayout diorite_layout = diorite_info_layout_get();
+    int max_steps_width = diorite_layout.compact ? 36 : 62;
+    GSize text_size = graphics_text_layout_get_content_size(
+        steps_buffer, font, GRect(0, 0, max_steps_width, 26),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
+    // Centre the walking icon and its rendered value in the assigned slot.
+    x = diorite_layout.steps_center - 11 - text_size.w / 2;
+    #else
     GSize text_size = graphics_text_layout_get_content_size(
         steps_buffer, font, GRect(0, 0, 62, 26),
         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
     // Position the step indicator group in the rectangular Health layouts.
     x = (144 - (5 + text_size.w)) / 2 - 12;
+    #endif
   #endif
   int steps_icon_x = x;
   #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
@@ -1076,28 +1118,75 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
 
   // A walking-person pictogram is more immediately associated with a step
   // counter than a generic shoe or footprint.
-  // Keep the walking-person pictogram black in every colour theme.
+  // On colour Pebbles, give the runner a pink head and forearms, with a blue
+  // short-sleeved shirt.  Keep the original solid-black treatment on Aplite.
+  #ifdef PBL_COLOR
+  graphics_context_set_fill_color(gContext, GColorMelon);
+  #else
   graphics_context_set_fill_color(gContext, GColorBlack);
-  graphics_context_set_stroke_color(gContext, GColorBlack);
+  #endif
   graphics_fill_circle(gContext, layout_point(GPoint(steps_icon_x + 8, y + 3)), layout_value(2));
   graphics_context_set_stroke_width(gContext, layout_value(2));
+  #ifdef PBL_COLOR
+  // Torso and the short sleeves.
+  graphics_context_set_stroke_color(gContext, GColorBlue);
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 6)),
+                     layout_point(GPoint(steps_icon_x + 8, y + 10)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 7)),
+                     layout_point(GPoint(steps_icon_x + 5, y + 8)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 7)),
+                     layout_point(GPoint(steps_icon_x + 11, y + 7)));
+  // Exposed forearms.
+  graphics_context_set_stroke_color(gContext, GColorMelon);
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 5, y + 8)),
+                     layout_point(GPoint(steps_icon_x + 3, y + 9)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 11, y + 7)),
+                     layout_point(GPoint(steps_icon_x + 13, y + 8)));
+  // The black section forms shorts; the lower legs are exposed.
+  graphics_context_set_stroke_color(gContext, GColorBlack);
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 10)),
+                     layout_point(GPoint(steps_icon_x + 8, y + 12)));
+  graphics_context_set_stroke_color(gContext, GColorMelon);
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 12)),
+                     layout_point(GPoint(steps_icon_x + 4, y + 15)));
+  graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 12)),
+                     layout_point(GPoint(steps_icon_x + 13, y + 14)));
+  #else
+  graphics_context_set_stroke_color(gContext, GColorBlack);
   graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 6)),
                      layout_point(GPoint(steps_icon_x + 8, y + 11)));
   graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 7)),
                      layout_point(GPoint(steps_icon_x + 3, y + 9)));
   graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 7)),
                      layout_point(GPoint(steps_icon_x + 13, y + 8)));
+  #endif
+  #ifndef PBL_COLOR
   graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 11)),
                      layout_point(GPoint(steps_icon_x + 4, y + 15)));
   graphics_draw_line(gContext, layout_point(GPoint(steps_icon_x + 8, y + 11)),
                      layout_point(GPoint(steps_icon_x + 13, y + 14)));
+  #endif
   graphics_context_set_text_color(gContext, palette.text);
+  #if defined(PBL_PLATFORM_DIORITE)
+  int steps_text_width = diorite_layout.compact ? 36 : 62;
+  int steps_text_y = y - 2;
+  (void)steps_text_y_offset;
+  #elif defined(PBL_PLATFORM_GABBRO)
+  // Keep the text at the same relative height as the walking icon for every
+  // Gabbro slot. Do not vary it with the number of visible indicators.
+  int steps_text_width = show_heart_indicator ? 49 : 62;
+  int steps_text_y = y;
+  (void)steps_text_y_offset;
+  #else
+  int steps_text_width = show_heart_indicator ? 49 : 62;
+  int steps_text_y = y + (show_heart_indicator ? -5 : -1) + steps_text_y_offset;
+  #endif
   graphics_draw_text(gContext,
                      steps_buffer,
                      font,
                      layout_rect(GRect(x + steps_text_x + steps_text_x_offset,
-                                       y + (show_heart_indicator ? -5 : -1) + steps_text_y_offset,
-                                       show_heart_indicator ? 49 : 62,
+                                       steps_text_y,
+                                       steps_text_width,
                                        show_heart_indicator ? 22 : 26)),
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
