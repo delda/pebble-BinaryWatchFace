@@ -1058,8 +1058,7 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     steps_text_x = 20;
   #endif
   #if defined(PBL_PLATFORM_GABBRO)
-    x = bottom_layout->x[BOTTOM_STEPS] +
-        (bottom_layout->slot_width[BOTTOM_STEPS] - 62) / 2;
+    x = bottom_layout->x[BOTTOM_STEPS];
     y = bottom_layout->y[BOTTOM_STEPS];
     steps_text_x_offset = bottom_layout->steps_text_x_offset;
     steps_text_y_offset = bottom_layout->steps_text_y_offset;

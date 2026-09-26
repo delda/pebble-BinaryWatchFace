@@ -2,15 +2,17 @@
 
 #if defined(PBL_PLATFORM_GABBRO)
 #define BOTTOM_LAYOUT_WIDTH 184
+#define BOTTOM_LAYOUT_EDGE_MARGIN 8
+#define BOTTOM_LAYOUT_CONTENT_WIDTH \
+  (BOTTOM_LAYOUT_WIDTH - (2 * BOTTOM_LAYOUT_EDGE_MARGIN))
 
 static int centered_element_start(int available_width, int element_width) {
   return (available_width - element_width) / 2;
 }
 
-// Widths are expressed in the 144px reference canvas. They deliberately
-// describe the complete reserved slot, not only the currently rendered value.
-// Steps and BPM use the agreed maximum examples: 13947 and 180.
-static const int s_max_width[BOTTOM_ELEMENT_COUNT] = {
+// Widths are expressed in the reference canvas. These are fallbacks for
+// callers that do not provide a current content width.
+static const int s_default_width[BOTTOM_ELEMENT_COUNT] = {
   12, // Bluetooth: largest reference bitmap (10x17, scaled from 14x23)
   32, // Heart rate: heart plus a three-digit BPM value
   42, // Steps: walking icon plus the value 13947
@@ -101,17 +103,18 @@ static int popcount(int value) {
   return result;
 }
 
-static int row_width(int mask) {
+static int row_width(int mask, const int element_width[BOTTOM_ELEMENT_COUNT]) {
   int width = 0;
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
     if (mask & (1 << i)) {
-      width += s_max_width[i];
+      width += element_width[i];
     }
   }
   return width;
 }
 
 static void choose_rows(const bool visible[BOTTOM_ELEMENT_COUNT],
+                        const int element_width[BOTTOM_ELEMENT_COUNT],
                         int row_masks[2], int count) {
   int visible_mask = 0;
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
@@ -134,7 +137,8 @@ static void choose_rows(const bool visible[BOTTOM_ELEMENT_COUNT],
       continue;
     }
     int other_mask = visible_mask ^ mask;
-    int difference = row_width(mask) - row_width(other_mask);
+    int difference = row_width(mask, element_width) -
+                     row_width(other_mask, element_width);
     if (difference < 0) {
       difference = -difference;
     }
@@ -147,21 +151,49 @@ static void choose_rows(const bool visible[BOTTOM_ELEMENT_COUNT],
   row_masks[1] = visible_mask ^ best_mask;
 }
 
-static void place_row(const int mask, int row, int y, BottomLayout *layout) {
-  const int margin = 8;
-  const int available_width = BOTTOM_LAYOUT_WIDTH - (2 * margin);
+static void place_row(const int mask, const int element_width[BOTTOM_ELEMENT_COUNT],
+                      int row, int y, BottomLayout *layout) {
   int count = popcount(mask);
-  int total_width = row_width(mask);
-  int gap = count > 1 ? (available_width - total_width) / (count - 1) : 0;
-  // With one element the whole available area is the slot: do not anchor it
-  // to the left margin just because there is no inter-element gap to compute.
-  int x = count == 1 ? centered_element_start(BOTTOM_LAYOUT_WIDTH, total_width) : margin;
+  int total_width = row_width(mask, element_width);
+  int margin;
+  int gap;
+  int x;
+
+  if (count == 1) {
+    // The round display has 8px unusable at each side. Keep the slot
+    // centred inside the remaining 168px instead of the full 184px.
+    margin = centered_element_start(BOTTOM_LAYOUT_CONTENT_WIDTH, total_width);
+    gap = 0;
+    x = BOTTOM_LAYOUT_EDGE_MARGIN + margin;
+  } else if (count == 2) {
+    // Two elements use three equal margins:
+    // | margin | element 1 | margin | element 2 | margin |
+    margin = (BOTTOM_LAYOUT_CONTENT_WIDTH - total_width) / 3;
+    gap = margin;
+    x = BOTTOM_LAYOUT_EDGE_MARGIN + margin;
+  } else if (count == 3) {
+    // Three elements use four equal spaces inside the usable area:
+    // | 8 | space | element 1 | space | element 2 | space |
+    //     element 3 | space | 8 |
+    margin = (BOTTOM_LAYOUT_CONTENT_WIDTH - total_width) / 4;
+    gap = margin;
+    x = BOTTOM_LAYOUT_EDGE_MARGIN + margin;
+  } else {
+    // The two 8px edge strips are always excluded from the usable width,
+    // including rows with three elements. They are not extra spacing to
+    // redistribute: the round bezel makes them unavailable.
+    margin = BOTTOM_LAYOUT_EDGE_MARGIN;
+    int available_width = BOTTOM_LAYOUT_WIDTH -
+                          (2 * BOTTOM_LAYOUT_EDGE_MARGIN);
+    gap = (available_width - total_width) / (count - 1);
+    x = margin;
+  }
 
   for (int element = 0; element < BOTTOM_ELEMENT_COUNT; element++) {
     if (!(mask & (1 << element))) {
       continue;
     }
-    int width = s_max_width[element];
+    int width = element_width[element];
     int center = x + width / 2;
     layout->center[element] = center;
     layout->slot_width[element] = width;
@@ -176,10 +208,15 @@ static void place_row(const int mask, int row, int y, BottomLayout *layout) {
 #endif
 
 void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
+                             const int element_width[BOTTOM_ELEMENT_COUNT],
                              BottomLayout *layout) {
   *layout = (BottomLayout){0};
 
 #if defined(PBL_PLATFORM_GABBRO)
+  int widths[BOTTOM_ELEMENT_COUNT];
+  for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
+    widths[i] = element_width[i] > 0 ? element_width[i] : s_default_width[i];
+  }
   int count = count_visible(visible);
   layout->visible_count = count;
   if (count == 0) {
@@ -187,13 +224,13 @@ void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
   }
 
   int row_masks[2] = {0, 0};
-  choose_rows(visible, row_masks, count);
+  choose_rows(visible, widths, row_masks, count);
   if (row_masks[1] == 0) {
-    place_row(row_masks[0], 0, 135, layout);
+    place_row(row_masks[0], widths, 0, 135, layout);
   } else {
     // Two rows share the lower band and use the same maximum-slot rules.
-    place_row(row_masks[0], 0, 119, layout);
-    place_row(row_masks[1], 1, 151, layout);
+    place_row(row_masks[0], widths, 0, 119, layout);
+    place_row(row_masks[1], widths, 1, 151, layout);
   }
 #else
   set_legacy_layout(visible, layout);

@@ -31,13 +31,67 @@ static bool bottom_element_is_visible(const RenderState *state, enum BottomEleme
   }
 }
 
+#if defined(PBL_PLATFORM_GABBRO)
+static int reference_width_from_pixels(int pixels) {
+  return (pixels * 9 + 12) / 13;
+}
+
+static int rendered_text_width(const char *text, GFont font, int max_width) {
+  GSize size = graphics_text_layout_get_content_size(
+      text, font, GRect(0, 0, max_width, 40),
+      GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
+  return size.w;
+}
+#endif
+
+static void bottom_element_widths(const RenderState *state,
+                                  int widths[BOTTOM_ELEMENT_COUNT]) {
+  int defaults[BOTTOM_ELEMENT_COUNT] = {12, 52, 62, 24, 42};
+  for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
+    widths[i] = defaults[i];
+  }
+#if defined(PBL_PLATFORM_GABBRO)
+  char buffer[12];
+  GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+
+  if (state->heart_rate_bpm > 0) {
+    snprintf(buffer, sizeof(buffer), "%u", (unsigned int)state->heart_rate_bpm);
+  } else {
+    snprintf(buffer, sizeof(buffer), "-");
+  }
+  widths[BOTTOM_HEART_RATE] = 18 +
+      reference_width_from_pixels(rendered_text_width(buffer, font, 34));
+
+  if (state->steps_today > 0) {
+    snprintf(buffer, sizeof(buffer), "%d", state->steps_today);
+  } else {
+    snprintf(buffer, sizeof(buffer), "-");
+  }
+  widths[BOTTOM_STEPS] = 19 +
+      reference_width_from_pixels(rendered_text_width(buffer, font, 62));
+
+  widths[BOTTOM_BATTERY] = state->battery_modality == 0 ? 24 : 30;
+
+  WeatherData weather = weather_get_data();
+  if (weather.has_data) {
+    snprintf(buffer, sizeof(buffer), "%d\xC2\xB0", weather.temperature);
+  } else {
+    snprintf(buffer, sizeof(buffer), "--\xC2\xB0");
+  }
+  widths[BOTTOM_WEATHER] = 22 +
+      reference_width_from_pixels(rendered_text_width(buffer, font, 36));
+#endif
+}
+
 static BottomLayout bottom_layout_create(const RenderState *state) {
   BottomLayout layout = {0};
   bool visible[BOTTOM_ELEMENT_COUNT] = {false};
+  int widths[BOTTOM_ELEMENT_COUNT];
   for (int element = 0; element < BOTTOM_ELEMENT_COUNT; element++) {
     visible[element] = bottom_element_is_visible(state, (enum BottomElement)element);
   }
-  bottom_layout_calculate(visible, &layout);
+  bottom_element_widths(state, widths);
+  bottom_layout_calculate(visible, widths, &layout);
   return layout;
 }
 

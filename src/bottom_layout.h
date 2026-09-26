@@ -23,4 +23,5 @@ typedef struct {
 } BottomLayout;
 
 void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
+                             const int element_width[BOTTOM_ELEMENT_COUNT],
                              BottomLayout *layout);
