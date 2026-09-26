@@ -228,8 +228,8 @@ void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
   if (row_masks[1] == 0) {
     place_row(row_masks[0], widths, 0, 135, layout);
   } else {
-    // Two rows share the lower band and use the same maximum-slot rules.
-    place_row(row_masks[0], widths, 0, 119, layout);
+    // Lower the first row for both two-row configurations.
+    place_row(row_masks[0], widths, 0, 129, layout);
     place_row(row_masks[1], widths, 1, 151, layout);
   }
 #else
