@@ -76,9 +76,9 @@
         "options": [{"label": "Icon", "value": "0"}, {"label": "Percentage", "value": "1"}]
       },
       {"type": "toggle", "messageKey": "SNOW_KEY", "label": "Snowfall", "defaultValue": false},
-      {"type": "toggle", "messageKey": "HEART_RATE_KEY", "label": "Show heart rate", "defaultValue": true},
-      {"type": "toggle", "messageKey": "STEPS_KEY", "label": "Show steps", "defaultValue": true},
-      {"type": "toggle", "messageKey": "WEATHER_ENABLED_KEY", "label": "Show weather", "defaultValue": true}
+      {"type": "toggle", "messageKey": "HEART_RATE_KEY", "label": "Show heart rate", "defaultValue": false, "capabilities": ["HEALTH", "NOT_PLATFORM_CHALK"]},
+      {"type": "toggle", "messageKey": "STEPS_KEY", "label": "Show steps", "defaultValue": false, "capabilities": ["HEALTH", "NOT_PLATFORM_CHALK"]},
+      {"type": "toggle", "messageKey": "WEATHER_ENABLED_KEY", "label": "Show weather", "defaultValue": false}
     ]
   },
   {

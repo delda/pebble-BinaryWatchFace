@@ -1,7 +1,11 @@
 #include "bottom_layout.h"
 
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
 #if defined(PBL_PLATFORM_GABBRO)
 #define BOTTOM_LAYOUT_WIDTH 184
+#else
+#define BOTTOM_LAYOUT_WIDTH 180
+#endif
 #define BOTTOM_LAYOUT_EDGE_MARGIN 8
 #define BOTTOM_LAYOUT_CONTENT_WIDTH \
   (BOTTOM_LAYOUT_WIDTH - (2 * BOTTOM_LAYOUT_EDGE_MARGIN))
@@ -21,7 +25,7 @@ static const int s_default_width[BOTTOM_ELEMENT_COUNT] = {
 };
 #endif
 
-#if defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
 static int count_visible(const bool visible[BOTTOM_ELEMENT_COUNT]) {
   int count = 0;
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
@@ -33,7 +37,7 @@ static int count_visible(const bool visible[BOTTOM_ELEMENT_COUNT]) {
 }
 #endif
 
-#if !defined(PBL_PLATFORM_GABBRO)
+#if !defined(PBL_PLATFORM_GABBRO) && !defined(PBL_PLATFORM_CHALK)
 static void set_legacy_layout(const bool visible[BOTTOM_ELEMENT_COUNT],
                               BottomLayout *layout) {
   enum BottomElement visible_elements[BOTTOM_ELEMENT_COUNT];
@@ -93,7 +97,7 @@ static void set_legacy_layout(const bool visible[BOTTOM_ELEMENT_COUNT],
 }
 #endif
 
-#if defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
 static int popcount(int value) {
   int result = 0;
   while (value != 0) {
@@ -212,7 +216,7 @@ void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
                              BottomLayout *layout) {
   *layout = (BottomLayout){0};
 
-#if defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
   int widths[BOTTOM_ELEMENT_COUNT];
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
     widths[i] = element_width[i] > 0 ? element_width[i] : s_default_width[i];

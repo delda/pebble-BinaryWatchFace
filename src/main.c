@@ -7,6 +7,24 @@
 
 static struct Flake s_flakes[NUM_FLAKES];
 static Layer *s_flake_layers[NUM_FLAKES];
+static RenderState s_render_state;
+
+static void set_flake_layers_enabled(bool enabled) {
+  if (enabled) {
+    for (int i = 0; i < NUM_FLAKES; i++) {
+      if (s_flake_layers[i] == NULL) {
+        s_flake_layers[i] = layer_create(GRect(0, 0, 16, 16));
+      }
+    }
+  } else {
+    for (int i = 0; i < NUM_FLAKES; i++) {
+      if (s_flake_layers[i] != NULL) {
+        layer_destroy(s_flake_layers[i]);
+        s_flake_layers[i] = NULL;
+      }
+    }
+  }
+}
 
 void dec2binTime(int hour, int minute){
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_INFO, "[%s] %s()", logTime(), __func__);
@@ -147,6 +165,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         snow = t->value->uint8;
         snow = snow % 2;
         persist_write_int(SNOW_KEY, snow);
+        set_flake_layers_enabled(snow != 0);
         if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "snow option: %d", snow);
         break;
       case HEART_RATE_KEY:
@@ -236,7 +255,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed){
 
 static void update_view(Layer *layer, GContext *gContext){
   (void)layer;
-  RenderState state = {
+  s_render_state = (RenderState){
     .hour = hour,
     .minute = minute,
     .bullets_number = {s_bulletsNumber[0], s_bulletsNumber[1]},
@@ -263,7 +282,7 @@ static void update_view(Layer *layer, GContext *gContext){
     .steps_today = health_get_steps(),
     .weather_enabled = weather_is_enabled(),
   };
-  render_watchface(gContext, palette, &state, s_flakes, s_flake_layers);
+  render_watchface(gContext, palette, &s_render_state, s_flakes, s_flake_layers);
 }
 
 static void window_load(Window *window){
@@ -279,9 +298,11 @@ static void window_load(Window *window){
   s_bulletsNumber[1] = 6;
   if(DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "bullets: %d - %d", s_bulletsNumber[0], s_bulletsNumber[1]);
 
+  set_flake_layers_enabled(snow != 0);
   for(int i=0; i<NUM_FLAKES; i++){
-    s_flake_layers[i] = layer_create(GRect(0, 0, 16, 16));
-    layer_add_child(window_layer, s_flake_layers[i]);
+    if (s_flake_layers[i] != NULL) {
+      layer_add_child(window_layer, s_flake_layers[i]);
+    }
   }
 
   layer_set_update_proc(s_mainLayer, update_view);
@@ -300,6 +321,7 @@ static void window_unload(){
   
   layer_destroy(s_mainLayer);
   s_mainLayer = NULL;
+  set_flake_layers_enabled(false);
 }
 
 static void init(){
@@ -327,8 +349,10 @@ static void init(){
   date = 23;
   help_num = 1;
   snow = 0;
-  show_heart_rate = 1;
-  show_steps = 1;
+  // Health is disabled by default, matching the Clay configuration.  Chalk
+  // does not have the health sensors required by these subscriptions.
+  show_heart_rate = 0;
+  show_steps = 0;
   weather_init();
   if(persist_exists(SHAPE_KEY)){
 		shape = persist_read_int(SHAPE_KEY);

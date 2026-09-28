@@ -778,16 +778,10 @@ void draw_bluetooth(GContext *gContext, int bluetooth_option, int bluetooth_stat
       // Emery's scaled destination is 14x23px.  Use the matching bitmap:
       // drawing the 10x15px asset in this larger rect makes Pebble tile it.
       h = 17;
-    #elif defined(PBL_PLATFORM_GABBRO)
+    #elif defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
       x = bottom_layout->x[BOTTOM_BLUETOOTH] +
           (bottom_layout->slot_width[BOTTOM_BLUETOOTH] - 10) / 2;
       y = bottom_layout->y[BOTTOM_BLUETOOTH];
-    #elif defined(PBL_PLATFORM_CHALK)
-      x = 85;
-      y = 140;
-      if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
-        x -= 20;
-      }
     #endif
     GRect rect = layout_rect(GRect(x, y, w, h));
     #if defined(PBL_PLATFORM_APLITE)
@@ -838,17 +832,13 @@ void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
           (bottom_layout->slot_width[BOTTOM_BATTERY] - 24) / 2;
       y = bottom_layout->y[BOTTOM_BATTERY];
     #elif defined(PBL_PLATFORM_CHALK)
-      x = 80;
-      y = 142;
+      int battery_width = battery_modality == 0 ? 24 : 30;
+      x = bottom_layout->x[BOTTOM_BATTERY] +
+          (bottom_layout->slot_width[BOTTOM_BATTERY] - battery_width) / 2;
+      y = bottom_layout->y[BOTTOM_BATTERY];
     #else
       x = 115;
       y = 7;
-    #endif
-    // On Chalk, shift the battery when Bluetooth is also visible.
-    #if defined(PBL_PLATFORM_CHALK)
-      if(bluetooth_option == BT_ALWAYS || (bluetooth_option == BT_ON_DISCONNECT && bluetooth_status == 0)){
-        x += 20;
-      }
     #endif
     #if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_EMERY)
       x = layout_x(x);

@@ -7,9 +7,18 @@
 #if defined(PBL_PLATFORM_GABBRO)
 #include "render_weather_gabbro.h"
 #endif
+#if defined(PBL_PLATFORM_CHALK)
+#include "render_weather_chalk.h"
+#endif
 #if defined(PBL_PLATFORM_DIORITE)
 #include "render_weather_diorite.h"
 #endif
+
+// Chalk has a smaller protected app stack than the newer color platforms.
+// Keep the render state and layout out of that stack; the update callback is
+// single-threaded, so static storage is safe here.
+static RenderState s_render_state;
+static BottomLayout s_bottom_layout;
 
 static bool bottom_element_is_visible(const RenderState *state, enum BottomElement element) {
   switch (element) {
@@ -31,7 +40,7 @@ static bool bottom_element_is_visible(const RenderState *state, enum BottomEleme
   }
 }
 
-#if defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
 static int reference_width_from_pixels(int pixels) {
   return (pixels * 9 + 12) / 13;
 }
@@ -50,7 +59,7 @@ static void bottom_element_widths(const RenderState *state,
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
     widths[i] = defaults[i];
   }
-#if defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK)
   char buffer[12];
   GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
 
@@ -99,65 +108,70 @@ void render_watchface(GContext *gContext, Color palettes[], const RenderState *s
                       struct Flake *flakes,
                       Layer *flake_layers[NUM_FLAKES]) {
   int easter_egg = isEasterEggDay();
-  RenderState render_state = *state;
+  s_render_state = *state;
   if (easter_egg != 0) {
-    render_state.shape = (easter_egg == 2) ? 11 : render_state.shape;
-    render_state.shape = (easter_egg == 3) ? 12 : render_state.shape;
-    render_state.shape = (easter_egg == 4) ? 13 : render_state.shape;
+    s_render_state.shape = (easter_egg == 2) ? 11 : s_render_state.shape;
+    s_render_state.shape = (easter_egg == 3) ? 12 : s_render_state.shape;
+    s_render_state.shape = (easter_egg == 4) ? 13 : s_render_state.shape;
 #ifdef PBL_PLATFORM_APLITE
-    render_state.color = 0;
+    s_render_state.color = 0;
 #else
-    render_state.color = (easter_egg == 1) ? 15 :
+    s_render_state.color = (easter_egg == 1) ? 15 :
                          (easter_egg == 2) ? 16 :
                          (easter_egg == 3) ? 17 : 18;
 #endif
   }
 
-  Color palette = palettes[render_state.color];
-  BottomLayout bottom_layout = bottom_layout_create(&render_state);
+  Color palette = palettes[s_render_state.color];
+  s_bottom_layout = bottom_layout_create(&s_render_state);
   draw_background(gContext, 0, GCornerNone, palette);
-  if (render_state.number > 0 && easter_egg != 4) {
-    draw_time_background(gContext, palette, render_state.hour, render_state.minute);
+  if (s_render_state.number > 0 && easter_egg != 4) {
+    draw_time_background(gContext, palette, s_render_state.hour, s_render_state.minute);
   }
-  draw_clock(gContext, palette, (bool)render_state.help_num, render_state.shape,
-             render_state.bullets_number, render_state.buffer_time);
+  draw_clock(gContext, palette, (bool)s_render_state.help_num, s_render_state.shape,
+             s_render_state.bullets_number, s_render_state.buffer_time);
 
-  if (render_state.bluetooth > 0) {
-    draw_bluetooth(gContext, render_state.bluetooth, render_state.bluetooth_status,
-                   render_state.battery, render_state.battery_level, render_state.color,
-                   &bottom_layout);
+  if (s_render_state.bluetooth > 0) {
+    draw_bluetooth(gContext, s_render_state.bluetooth, s_render_state.bluetooth_status,
+                   s_render_state.battery, s_render_state.battery_level, s_render_state.color,
+                   &s_bottom_layout);
   }
-  if (render_state.battery > 0) {
-    draw_battery(gContext, render_state.battery, render_state.bluetooth,
-                 render_state.bluetooth_status, render_state.battery_level,
-                 render_state.battery_modality, easter_egg, &bottom_layout, palette);
+  if (s_render_state.battery > 0) {
+    draw_battery(gContext, s_render_state.battery, s_render_state.bluetooth,
+                 s_render_state.bluetooth_status, s_render_state.battery_level,
+                 s_render_state.battery_modality, easter_egg, &s_bottom_layout, palette);
   }
   // Easter keeps its greeting visible even if the regular date is disabled.
-  if (render_state.date > 0 || easter_egg == 4) {
-    draw_date(gContext, palette, render_state.date, easter_egg);
+  if (s_render_state.date > 0 || easter_egg == 4) {
+    draw_date(gContext, palette, s_render_state.date, easter_egg);
   }
 
-  render_layout_draw_health_indicators(gContext, palette, render_state.show_heart_rate,
-                                        render_state.show_steps, render_state.heart_rate_bpm,
-                                        render_state.steps_today, &bottom_layout);
+  render_layout_draw_health_indicators(gContext, palette, s_render_state.show_heart_rate,
+                                        s_render_state.show_steps, s_render_state.heart_rate_bpm,
+                                        s_render_state.steps_today, &s_bottom_layout);
 
 #if defined(PBL_PLATFORM_EMERY)
-  if (render_state.weather_enabled) {
+  if (s_render_state.weather_enabled) {
     render_weather_emery(gContext, palette, weather_get_data());
   }
 #endif
 #if defined(PBL_PLATFORM_GABBRO)
-  if (render_state.weather_enabled) {
-    render_weather_gabbro(gContext, palette, weather_get_data(), &bottom_layout);
+  if (s_render_state.weather_enabled) {
+    render_weather_gabbro(gContext, palette, weather_get_data(), &s_bottom_layout);
+  }
+#endif
+#if defined(PBL_PLATFORM_CHALK)
+  if (s_render_state.weather_enabled) {
+    render_weather_chalk(gContext, palette, weather_get_data(), &s_bottom_layout);
   }
 #endif
 #if defined(PBL_PLATFORM_DIORITE)
-  if (render_state.weather_enabled) {
+  if (s_render_state.weather_enabled) {
     render_weather_diorite(gContext, palette, weather_get_data());
   }
 #endif
 
-  if (easter_egg == 1 || easter_egg == 2 || render_state.snow) {
+  if (easter_egg == 1 || easter_egg == 2 || s_render_state.snow) {
     for (int i = 0; i < NUM_FLAKES; i++) {
       draw_flake(gContext, flake_layers[i], flakes[i]);
     }

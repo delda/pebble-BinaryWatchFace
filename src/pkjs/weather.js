@@ -33,9 +33,14 @@ function fetchWeather(position) {
   var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + position.coords.latitude +
       '&longitude=' + position.coords.longitude +
       '&current=temperature_2m&hourly=weather_code&forecast_hours=5&timeformat=unixtime';
+  console.log('Weather URL: ' + url);
   var request = new XMLHttpRequest();
   request.onload = function() {
-    if (request.status !== 200) { return; }
+    console.log('Weather HTTP status: ' + request.status);
+    if (request.status !== 200) {
+      console.log('Weather response: ' + request.responseText);
+      return;
+    }
     try {
       var response = JSON.parse(request.responseText);
       sendWeather(response.current.temperature_2m, forecastIconAtThreeHours(response.hourly));
@@ -43,7 +48,9 @@ function fetchWeather(position) {
       console.log('Weather response error: ' + error);
     }
   };
-  request.onerror = function() { console.log('Weather request failed'); };
+  request.onerror = function(error) {
+    console.log('Weather network error: ' + JSON.stringify(error));
+  };
   request.open('GET', url);
   request.send();
 }
