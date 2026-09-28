@@ -93,7 +93,7 @@ static int layout_value(int value) {
   return (value * 13 + 4) / 9;
 #elif defined(PBL_PLATFORM_EMERY)
   // Emery is 228px tall, versus Basalt's 168px design canvas.  Use one
-  // uniform ratio so the clock's geometry is enlarged without distortion.
+  // vertical ratio so the clock's geometry is enlarged without distortion.
   return (value * 19 + 7) / 14;
 #else
   return value;
@@ -102,8 +102,8 @@ static int layout_value(int value) {
 
 static int layout_x(int value) {
 #ifdef PBL_PLATFORM_EMERY
-  // Centring the 195px-wide scaled canvas leaves a balanced 2px margin.
-  return layout_value(value) + 2;
+  // Emery is 200px wide, versus the 144px reference canvas.
+  return (value * 25 + 9) / 18;
 #else
   return layout_value(value);
 #endif
@@ -944,10 +944,19 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
     y = 166;
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
-    if (show_steps) {
-      // Reserve the centre of Emery's health row for the weather indicator.
-      x = 3;
-    }
+    x = bottom_layout->x[BOTTOM_HEART_RATE];
+  #endif
+
+  #ifdef PBL_PLATFORM_EMERY
+    GFont emery_font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+    GSize text_size = graphics_text_layout_get_content_size(
+        heart_rate_buffer, emery_font, GRect(0, 0, 46, 30),
+        GTextOverflowModeFill, GTextAlignmentLeft);
+    int text_width = (text_size.w * 18 + 12) / 25;
+    int text_offset = show_steps ? 16 : 18;
+    int group_width = text_offset + text_width;
+    x = bottom_layout->x[BOTTOM_HEART_RATE] +
+        (bottom_layout->slot_width[BOTTOM_HEART_RATE] - group_width) / 2;
   #endif
 
   // Keep the health icon visually distinct from its numeric value.
@@ -1056,10 +1065,8 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     y = 166;
   #elif defined(PBL_PLATFORM_EMERY)
     y = 118;
+    x = bottom_layout->x[BOTTOM_STEPS];
     if (show_heart_indicator) {
-      // Keep the right side free for the step total after the weather block.
-      // This is 15 physical pixels to the right of the initial Emery position.
-      x = 91;
       // Two design pixels correspond to three physical Emery pixels.
       steps_text_x -= 2;
     }
@@ -1080,6 +1087,16 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
   #endif
   #ifdef PBL_PLATFORM_EMERY
     font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+  #endif
+  #ifdef PBL_PLATFORM_EMERY
+    GSize text_size = graphics_text_layout_get_content_size(
+        steps_buffer, font, GRect(0, 0, 84, 30),
+        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
+    int text_width = (text_size.w * 18 + 12) / 25;
+    int text_offset = show_heart_indicator ? 17 : 19;
+    int group_width = text_offset + text_width;
+    x = bottom_layout->x[BOTTOM_STEPS] +
+        (bottom_layout->slot_width[BOTTOM_STEPS] - group_width) / 2;
   #endif
   #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
       defined(PBL_PLATFORM_FLINT)

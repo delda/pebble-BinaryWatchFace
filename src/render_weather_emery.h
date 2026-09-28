@@ -3,5 +3,7 @@
 #include <pebble.h>
 #include "common.h"
 #include "weather.h"
+#include "bottom_layout.h"
 
-void render_weather_emery(GContext *gContext, Color palette, WeatherData data);
+void render_weather_emery(GContext *gContext, Color palette, WeatherData data,
+                          const BottomLayout *bottom_layout);

@@ -55,7 +55,14 @@ static int rendered_text_width(const char *text, GFont font, int max_width) {
 
 static void bottom_element_widths(const RenderState *state,
                                   int widths[BOTTOM_ELEMENT_COUNT]) {
+  #if defined(PBL_PLATFORM_EMERY)
+  // Emery uses the 144px reference canvas for the horizontal slot layout.
+  // These widths are compact group widths so BPM, steps and weather can
+  // coexist in three slots after the canvas is scaled to 200px.
+  int defaults[BOTTOM_ELEMENT_COUNT] = {12, 44, 58, 24, 38};
+  #else
   int defaults[BOTTOM_ELEMENT_COUNT] = {12, 52, 62, 24, 42};
+  #endif
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
     widths[i] = defaults[i];
   }
@@ -99,6 +106,12 @@ static BottomLayout bottom_layout_create(const RenderState *state) {
   for (int element = 0; element < BOTTOM_ELEMENT_COUNT; element++) {
     visible[element] = bottom_element_is_visible(state, (enum BottomElement)element);
   }
+#if defined(PBL_PLATFORM_EMERY)
+  // Bluetooth and battery keep their fixed Emery positions. Only the health
+  // and weather indicators participate in the shared horizontal layout.
+  visible[BOTTOM_BLUETOOTH] = false;
+  visible[BOTTOM_BATTERY] = false;
+#endif
   bottom_element_widths(state, widths);
   bottom_layout_calculate(visible, widths, &layout);
   return layout;
@@ -152,7 +165,7 @@ void render_watchface(GContext *gContext, Color palettes[], const RenderState *s
 
 #if defined(PBL_PLATFORM_EMERY)
   if (s_render_state.weather_enabled) {
-    render_weather_emery(gContext, palette, weather_get_data());
+    render_weather_emery(gContext, palette, weather_get_data(), &s_bottom_layout);
   }
 #endif
 #if defined(PBL_PLATFORM_GABBRO)
