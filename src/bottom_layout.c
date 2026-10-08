@@ -1,6 +1,8 @@
 #include "bottom_layout.h"
 
-#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_EMERY)
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+    defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || \
+    defined(PBL_PLATFORM_EMERY)
 #if defined(PBL_PLATFORM_GABBRO)
 #define BOTTOM_LAYOUT_WIDTH 184
 #elif defined(PBL_PLATFORM_CHALK)
@@ -8,7 +10,8 @@
 #else
 #define BOTTOM_LAYOUT_WIDTH 144
 #endif
-#if defined(PBL_PLATFORM_EMERY)
+#if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_BASALT) || \
+    defined(PBL_PLATFORM_FLINT)
 #define BOTTOM_LAYOUT_EDGE_MARGIN 0
 #else
 #define BOTTOM_LAYOUT_EDGE_MARGIN 8
@@ -31,7 +34,9 @@ static const int s_default_width[BOTTOM_ELEMENT_COUNT] = {
 };
 #endif
 
-#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_EMERY)
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+    defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || \
+    defined(PBL_PLATFORM_EMERY)
 static int count_visible(const bool visible[BOTTOM_ELEMENT_COUNT]) {
   int count = 0;
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
@@ -43,7 +48,9 @@ static int count_visible(const bool visible[BOTTOM_ELEMENT_COUNT]) {
 }
 #endif
 
-#if !defined(PBL_PLATFORM_GABBRO) && !defined(PBL_PLATFORM_CHALK) && !defined(PBL_PLATFORM_EMERY)
+#if !defined(PBL_PLATFORM_BASALT) && !defined(PBL_PLATFORM_FLINT) && \
+    !defined(PBL_PLATFORM_GABBRO) && !defined(PBL_PLATFORM_CHALK) && \
+    !defined(PBL_PLATFORM_EMERY)
 static void set_legacy_layout(const bool visible[BOTTOM_ELEMENT_COUNT],
                               BottomLayout *layout) {
   enum BottomElement visible_elements[BOTTOM_ELEMENT_COUNT];
@@ -103,7 +110,9 @@ static void set_legacy_layout(const bool visible[BOTTOM_ELEMENT_COUNT],
 }
 #endif
 
-#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_EMERY)
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+    defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || \
+    defined(PBL_PLATFORM_EMERY)
 static int popcount(int value) {
   int result = 0;
   while (value != 0) {
@@ -133,13 +142,21 @@ static void choose_rows(const bool visible[BOTTOM_ELEMENT_COUNT],
     }
   }
 
-  if (count <= 3) {
+  if (count <= 3 && row_width(visible_mask, element_width) <=
+                         BOTTOM_LAYOUT_CONTENT_WIDTH) {
     row_masks[0] = visible_mask;
     row_masks[1] = 0;
     return;
   }
 
-  int first_row_size = count == 4 ? 2 : 3;
+  int first_row_size;
+  if (count == 5) {
+    first_row_size = 3;
+  } else if (count == 4 || count == 3) {
+    first_row_size = 2;
+  } else {
+    first_row_size = 1;
+  }
   int best_mask = 0;
   int best_difference = 10000;
   for (int mask = 0; mask < (1 << BOTTOM_ELEMENT_COUNT); mask++) {
@@ -170,8 +187,8 @@ static void place_row(const int mask, const int element_width[BOTTOM_ELEMENT_COU
   int x;
 
   if (count == 1) {
-    // The round display has 8px unusable at each side. Keep the slot
-    // centred inside the remaining 168px instead of the full 184px.
+    // Round displays have 8px unusable at each side. Rectangular displays
+    // use the full width.
     margin = centered_element_start(BOTTOM_LAYOUT_CONTENT_WIDTH, total_width);
     gap = 0;
     x = BOTTOM_LAYOUT_EDGE_MARGIN + margin;
@@ -189,9 +206,8 @@ static void place_row(const int mask, const int element_width[BOTTOM_ELEMENT_COU
     gap = margin;
     x = BOTTOM_LAYOUT_EDGE_MARGIN + margin;
   } else {
-    // The two 8px edge strips are always excluded from the usable width,
-    // including rows with three elements. They are not extra spacing to
-    // redistribute: the round bezel makes them unavailable.
+    // On round displays the two 8px edge strips remain excluded, including
+    // rows with three elements. Rectangular displays use their full width.
     margin = BOTTOM_LAYOUT_EDGE_MARGIN;
     int available_width = BOTTOM_LAYOUT_WIDTH -
                           (2 * BOTTOM_LAYOUT_EDGE_MARGIN);
@@ -222,7 +238,9 @@ void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
                              BottomLayout *layout) {
   *layout = (BottomLayout){0};
 
-#if defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || defined(PBL_PLATFORM_EMERY)
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+    defined(PBL_PLATFORM_GABBRO) || defined(PBL_PLATFORM_CHALK) || \
+    defined(PBL_PLATFORM_EMERY)
   int widths[BOTTOM_ELEMENT_COUNT];
   for (int i = 0; i < BOTTOM_ELEMENT_COUNT; i++) {
     widths[i] = element_width[i] > 0 ? element_width[i] : s_default_width[i];
@@ -236,11 +254,21 @@ void bottom_layout_calculate(const bool visible[BOTTOM_ELEMENT_COUNT],
   int row_masks[2] = {0, 0};
   choose_rows(visible, widths, row_masks, count);
   if (row_masks[1] == 0) {
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT)
+    place_row(row_masks[0], widths, 0, 116, layout);
+#else
     place_row(row_masks[0], widths, 0, 135, layout);
+#endif
   } else {
-    // Lower the first row for both two-row configurations.
+    // Basalt/Flint have the original 168px-high canvas; keep the second row
+    // inside it while retaining Emery/Gabbro/Chalk's established positions.
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT)
+    place_row(row_masks[0], widths, 0, 94, layout);
+    place_row(row_masks[1], widths, 1, 116, layout);
+#else
     place_row(row_masks[0], widths, 0, 129, layout);
     place_row(row_masks[1], widths, 1, 151, layout);
+#endif
   }
 #else
   set_legacy_layout(visible, layout);

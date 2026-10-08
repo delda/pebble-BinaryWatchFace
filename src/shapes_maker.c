@@ -827,14 +827,14 @@ void draw_battery(GContext *gContext, int battery_option, int bluetooth_option,
 
   if((battery_option == BA_UNDER_20_PERC && battery_level < BA_PERCENT_WARNING) || battery_option == BA_ALWAYS){
     int x, y;
-    #if defined(PBL_PLATFORM_GABBRO)
-      x = bottom_layout->x[BOTTOM_BATTERY] +
-          (bottom_layout->slot_width[BOTTOM_BATTERY] - 24) / 2;
-      y = bottom_layout->y[BOTTOM_BATTERY];
-    #elif defined(PBL_PLATFORM_CHALK)
+    #if defined(PBL_PLATFORM_CHALK)
       int battery_width = battery_modality == 0 ? 24 : 30;
       x = bottom_layout->x[BOTTOM_BATTERY] +
           (bottom_layout->slot_width[BOTTOM_BATTERY] - battery_width) / 2;
+      y = bottom_layout->y[BOTTOM_BATTERY];
+    #elif defined(PBL_PLATFORM_GABBRO)
+      x = bottom_layout->x[BOTTOM_BATTERY] +
+          (bottom_layout->slot_width[BOTTOM_BATTERY] - 24) / 2;
       y = bottom_layout->y[BOTTOM_BATTERY];
     #else
       x = 115;
@@ -934,7 +934,8 @@ void draw_heart_rate(GContext *gContext, Color palette, uint8_t heart_rate_bpm,
     x = diorite_layout.heart_rate_center - group_width / 2;
     y = 116;
   #endif
-  #if defined(PBL_PLATFORM_GABBRO)
+  #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+      defined(PBL_PLATFORM_GABBRO)
     // The slot's left edge is the element's start position. Do not centre
     // the fixed 52px BPM artwork again, otherwise changing the reserved slot
     // width cancels out and produces the same x coordinate every time.
@@ -1056,7 +1057,8 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     y = 116;
     steps_text_x = 20;
   #endif
-  #if defined(PBL_PLATFORM_GABBRO)
+  #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+      defined(PBL_PLATFORM_GABBRO)
     x = bottom_layout->x[BOTTOM_STEPS];
     y = bottom_layout->y[BOTTOM_STEPS];
     steps_text_x_offset = bottom_layout->steps_text_x_offset;
@@ -1098,8 +1100,7 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
     x = bottom_layout->x[BOTTOM_STEPS] +
         (bottom_layout->slot_width[BOTTOM_STEPS] - group_width) / 2;
   #endif
-  #if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_DIORITE) || \
-      defined(PBL_PLATFORM_FLINT)
+  #if defined(PBL_PLATFORM_DIORITE)
     #if defined(PBL_PLATFORM_DIORITE)
     DioriteInfoLayout diorite_layout = diorite_info_layout_get();
     int max_steps_width = diorite_layout.compact ? 36 : 62;
@@ -1108,12 +1109,6 @@ void draw_steps(GContext *gContext, Color palette, int steps, bool show_heart_ra
         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
     // Centre the walking icon and its rendered value in the assigned slot.
     x = diorite_layout.steps_center - 11 - text_size.w / 2;
-    #else
-    GSize text_size = graphics_text_layout_get_content_size(
-        steps_buffer, font, GRect(0, 0, 62, 26),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft);
-    // Position the step indicator group in the rectangular Health layouts.
-    x = (144 - (5 + text_size.w)) / 2 - 12;
     #endif
   #endif
   int steps_icon_x = x;

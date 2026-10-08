@@ -1,6 +1,9 @@
 #include "render.h"
 #include "render_layout.h"
 #include "weather.h"
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT)
+#include "render_weather_basalt.h"
+#endif
 #if defined(PBL_PLATFORM_EMERY)
 #include "render_weather_emery.h"
 #endif
@@ -60,6 +63,10 @@ static void bottom_element_widths(const RenderState *state,
   // These widths are compact group widths so BPM, steps and weather can
   // coexist in three slots after the canvas is scaled to 200px.
   int defaults[BOTTOM_ELEMENT_COUNT] = {12, 44, 58, 24, 38};
+  #elif defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT)
+  // Basalt uses the full 144px canvas for the three optional indicators.
+  // Keep their reserved widths compact enough to share one aligned row.
+  int defaults[BOTTOM_ELEMENT_COUNT] = {12, 44, 56, 24, 38};
   #else
   int defaults[BOTTOM_ELEMENT_COUNT] = {12, 52, 62, 24, 42};
   #endif
@@ -106,9 +113,10 @@ static BottomLayout bottom_layout_create(const RenderState *state) {
   for (int element = 0; element < BOTTOM_ELEMENT_COUNT; element++) {
     visible[element] = bottom_element_is_visible(state, (enum BottomElement)element);
   }
-#if defined(PBL_PLATFORM_EMERY)
-  // Bluetooth and battery keep their fixed Emery positions. Only the health
-  // and weather indicators participate in the shared horizontal layout.
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT) || \
+    defined(PBL_PLATFORM_EMERY)
+  // Bluetooth and battery keep their fixed top positions on rectangular
+  // displays. Only the health and weather indicators use the shared layout.
   visible[BOTTOM_BLUETOOTH] = false;
   visible[BOTTOM_BATTERY] = false;
 #endif
@@ -163,6 +171,11 @@ void render_watchface(GContext *gContext, Color palettes[], const RenderState *s
                                         s_render_state.show_steps, s_render_state.heart_rate_bpm,
                                         s_render_state.steps_today, &s_bottom_layout);
 
+#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_FLINT)
+  if (s_render_state.weather_enabled) {
+    render_weather_basalt(gContext, palette, weather_get_data(), &s_bottom_layout);
+  }
+#endif
 #if defined(PBL_PLATFORM_EMERY)
   if (s_render_state.weather_enabled) {
     render_weather_emery(gContext, palette, weather_get_data(), &s_bottom_layout);

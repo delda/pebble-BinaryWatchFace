@@ -2,7 +2,8 @@
 #include "shapes_maker.h"
 
 #if !defined(PBL_PLATFORM_EMERY) && !defined(PBL_PLATFORM_GABBRO) && \
-    !defined(PBL_PLATFORM_DIORITE)
+    !defined(PBL_PLATFORM_DIORITE) && !defined(PBL_PLATFORM_BASALT) && \
+    !defined(PBL_PLATFORM_FLINT)
 void render_layout_draw_health_indicators(GContext *gContext, Color palette,
                                           bool show_heart_rate, bool show_steps,
                                           int heart_rate_bpm, int steps_today,
